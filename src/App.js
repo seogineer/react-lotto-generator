@@ -70,7 +70,7 @@ const GeneratorSection = () => {
   const generateByFrequency = () => {
     setIsGenerating(true);
     const LOTTO_API_URL = process.env.REACT_APP_LOTTO_API_URL;
-    axios.get(`${LOTTO_API_URL}/drawing/getMostFrequentNumber`).then(response => {
+    axios.get(`${LOTTO_API_URL}/getMostFrequentNumber`).then(response => {
       const { one, two, three, four, five, six } = response.data;
       setNumbers([one, two, three, four, five, six]);
       setIsGenerating(false);
