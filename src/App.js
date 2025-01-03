@@ -47,7 +47,7 @@ const GeneratorSection = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationType, setGenerationType] = useState('recommend');
 
-  const generateNumbers = () => {
+  const generateByRandom = () => {
     setIsGenerating(true);
     setTimeout(() => {
       const newNumbers = new Set();
@@ -59,7 +59,7 @@ const GeneratorSection = () => {
     }, 800);
   };
 
-  const generateByFrequency = () => {
+  const generateByRecommend = () => {
     setIsGenerating(true);
     axios.get(`${LOTTO_API_URL}/generate`).then(response => {
       const { one, two, three, four, five, six } = response.data;
@@ -93,7 +93,7 @@ const GeneratorSection = () => {
 
       <div className="flex justify-center">
         <button
-          onClick={generationType === 'random' ? generateNumbers : generateByFrequency}
+          onClick={generationType === 'random' ? generateByRandom : generateByRecommend}
           disabled={isGenerating}
           className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-indigo-600 text-white rounded-lg 
                    hover:bg-indigo-700 transition-colors duration-200 
@@ -123,7 +123,7 @@ const WinningNumbersSection = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [winningNumbersData, setWinningNumbersData] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
-  const itemsPerPage = 50;
+  const itemsPerPage = 5;
 
   const winningNumbers = async (currentPage) => {
     try {
