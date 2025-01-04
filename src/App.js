@@ -77,7 +77,7 @@ const GeneratorSection = () => {
         >
           <div className="flex items-center gap-1 sm:gap-2">
             <BarChart2 size={16} className="sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline">추천</span>
+            <span className="inline sm:inline">추천</span>
           </div>
         </TabButton>
         <TabButton
@@ -86,7 +86,7 @@ const GeneratorSection = () => {
         >
           <div className="flex items-center gap-1 sm:gap-2">
             <Dices size={16} className="sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline">랜덤</span>
+            <span className="inline sm:inline">랜덤</span>
           </div>
         </TabButton>
       </div>
