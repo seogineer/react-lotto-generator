@@ -61,7 +61,7 @@ const GeneratorSection = () => {
 
   const generateByRecommend = () => {
     setIsGenerating(true);
-    axios.get(`${LOTTO_API_URL}/generate`).then(response => {
+    axios.get(`${LOTTO_API_URL}/drawings/generate`).then(response => {
       const { one, two, three, four, five, six } = response.data;
       setNumbers([one, two, three, four, five, six]);
       setIsGenerating(false);
