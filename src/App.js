@@ -194,22 +194,39 @@ const WinningNumbersSection = () => {
 };
 
 const StatisticsSection = () => {
-  const mostFrequentNumbers = [
-    { number: 34, frequency: 123 },
-    { number: 12, frequency: 119 },
-    { number: 28, frequency: 115 },
-    { number: 45, frequency: 112 },
-    { number: 9, frequency: 110 },
-  ];
+  const [mostFrequentNumbers, setMostFrequentNumbers] = useState([]);
+  const [positionStats, setPositionStats] = useState([]);
 
-  const positionStats = [
-    { position: 1, numbers: [12, 23, 34, 45, 7] },
-    { position: 2, numbers: [14, 25, 36, 47, 8] },
-    { position: 3, numbers: [16, 27, 38, 41, 9] },
-    { position: 4, numbers: [18, 29, 31, 42, 5] },
-    { position: 5, numbers: [11, 22, 33, 44, 6] },
-    { position: 6, numbers: [13, 24, 35, 46, 4] },
-  ];
+  const getMostFrequentNumbers = async () => {
+    try {
+      const response = await axios.get(`${LOTTO_API_URL}/drawings/frequent`);
+      setMostFrequentNumbers(response.data);
+    } catch (error) {
+      console.error('데이터 요청 실패:', error);
+    }
+  };
+
+  const getPositionStats = async () => {
+    try {
+      const response = await axios.get(`${LOTTO_API_URL}/drawings/position/frequent`);
+
+      setPositionStats([
+        { position: 1, numbers: response.data.filter(number => number.position === 1).map(number => number.number) },
+        { position: 2, numbers: response.data.filter(number => number.position === 2).map(number => number.number) },
+        { position: 3, numbers: response.data.filter(number => number.position === 3).map(number => number.number) },
+        { position: 4, numbers: response.data.filter(number => number.position === 4).map(number => number.number) },
+        { position: 5, numbers: response.data.filter(number => number.position === 5).map(number => number.number) },
+        { position: 6, numbers: response.data.filter(number => number.position === 6).map(number => number.number) },
+      ]);
+    } catch (error) {
+      console.error('데이터 요청 실패:', error);
+    }
+  };
+
+  useEffect(() => {
+    getMostFrequentNumbers();
+    getPositionStats();
+  }, []);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -224,7 +241,7 @@ const StatisticsSection = () => {
                   <div className="h-3 sm:h-4 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-indigo-600 transition-all duration-500"
-                      style={{ width: `${(frequency / 150) * 100}%` }}
+                      style={{ width: `${(frequency / 300) * 100}%` }}
                     />
                   </div>
                 </div>
