@@ -1,11 +1,5 @@
 # 로또 번호 생성기_프론트엔드
 
-https://seogineer.github.io/react-lotto-generator/
-
-![Main Screenshot](screenshot1.png)
-![Main Screenshot](screenshot2.png)
-![Main Screenshot](screenshot3.png)
-
 ## 소개
 - 랜덤으로 생성되는 번호뿐만 아니라 통계에 기반한 로또 번호 생성기
 - 역대 당첨 번호와 가장 빈도 높은 번호의 통계를 조회
@@ -25,6 +19,14 @@ https://seogineer.github.io/react-lotto-generator/
 - 언어: Javascript
 - 라이브러리: React
 - 기타: HTML, CSS, Github pages
+
+## 스크린샷
+![Main Screenshot](screenshot1.png)
+![Main Screenshot](screenshot2.png)
+![Main Screenshot](screenshot3.png)
+
+## 링크
+https://seogineer.github.io/react-lotto-generator/
 
 ## 설치 및 실행
 https://github.com/seogineer/kotlin-spring-lotto-generator
