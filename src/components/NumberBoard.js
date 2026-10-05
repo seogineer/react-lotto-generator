@@ -22,13 +22,13 @@ const Slot = ({ value, spinning, runId }) => {
   }
 
   return (
-    <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-full border-2 border-dashed border-line-strong bg-panel flex items-center justify-center text-lg sm:text-2xl font-bold font-mono text-muted">
+    <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-lg border-2 border-dashed border-line-strong bg-panel flex items-center justify-center text-lg sm:text-2xl font-bold font-mono text-muted">
       {spinning ? (display ?? '·') : '?'}
     </div>
   );
 };
 
-const NumberBoard = ({ values, spinning, runId, onSpin, soundOn }) => {
+const NumberBoard = ({ values, spinning, runId, onSpin, soundOn, busy = false, adNotice = '' }) => {
   const isGenerating = spinning.some(Boolean);
 
   useEffect(() => {
@@ -47,16 +47,16 @@ const NumberBoard = ({ values, spinning, runId, onSpin, soundOn }) => {
 
       <button
         onClick={onSpin}
-        disabled={isGenerating}
+        disabled={isGenerating || busy}
         className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 min-h-[48px] bg-brand text-on-brand text-lg font-bold rounded-full
                  shadow-md hover:brightness-110 transition-all duration-200
                  focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2
                  disabled:opacity-60 inline-flex items-center justify-center gap-2"
       >
-        {isGenerating ? (
+        {isGenerating || busy ? (
           <>
             <Loader2 className="animate-spin w-5 h-5" aria-hidden="true" />
-            분석 중...
+            {isGenerating ? '분석 중...' : '준비 중...'}
           </>
         ) : (
           <>
@@ -65,6 +65,7 @@ const NumberBoard = ({ values, spinning, runId, onSpin, soundOn }) => {
           </>
         )}
       </button>
+      {adNotice && <p className="mt-2 text-xs text-muted">{adNotice}</p>}
       <p className="hidden sm:block mt-2 text-xs text-muted">스페이스바를 눌러도 생성할 수 있어요</p>
     </>
   );

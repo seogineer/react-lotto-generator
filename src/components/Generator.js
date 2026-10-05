@@ -8,6 +8,7 @@ import NumberPicker from './NumberPicker';
 import Ticket from './Ticket';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { playDone, playStop } from '../utils/sound';
+import { AD_TYPE, adController } from '../utils/ads';
 import {
   PICK_COUNT,
   MAX_GAMES,
@@ -43,11 +44,15 @@ const Generator = () => {
   const [soundOn, setSoundOn] = useLocalStorage('lotto-sound', false);
   const [toast, setToast] = useState('');
   const [announce, setAnnounce] = useState('');
+  const [adBusy, setAdBusy] = useState(false);
   const toastTimer = useRef(null);
 
   const isGenerating = spinning.some(Boolean);
   const optionsError = mode === 'random' ? validateOptions(options) : null;
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+  const adNotice = adController.isEnabled()
+    ? (AD_TYPE === 'rewarded' ? '광고를 끝까지 보면 번호를 만들 수 있어요' : '번호를 만들 때 광고가 나올 수 있어요')
+    : '';
 
   const showToast = useCallback((message) => {
     setToast(message);
@@ -57,6 +62,9 @@ const Generator = () => {
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
+  // 광고는 미리 로드해 둔다(로드 -> 표시 순서가 필수).
+  useEffect(() => { adController.preload(); }, []);
+
   const finish = useCallback((sets) => {
     const entry = { id: Date.now(), sets };
     setCurrent(entry);
@@ -65,12 +73,7 @@ const Generator = () => {
     if (soundOn) playDone();
   }, [setHistory, soundOn]);
 
-  const handleSpin = useCallback(() => {
-    if (isGenerating) return;
-    if (optionsError) {
-      showToast(optionsError);
-      return;
-    }
+  const startGeneration = useCallback(() => {
     setCurrent(null);
     setAnnounce('');
     setSpinning(Array(PICK_COUNT).fill(true));
@@ -95,7 +98,27 @@ const Generator = () => {
       setSpinning(Array(PICK_COUNT).fill(false));
       showToast('번호를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
     });
-  }, [isGenerating, optionsError, mode, games, options, soundOn, finish, showToast]);
+  }, [mode, games, options, soundOn, finish, showToast]);
+
+  // 번호 생성을 누르면 (설정된 경우) 광고를 먼저 보여 주고, 끝나면 생성을 시작한다.
+  // 광고가 준비되지 않았거나 실패하면 광고 없이 바로 생성한다.
+  const handleSpin = useCallback(() => {
+    if (isGenerating || adBusy) return;
+    if (optionsError) {
+      showToast(optionsError);
+      return;
+    }
+    if (!adController.isEnabled()) {
+      startGeneration();
+      return;
+    }
+    setAdBusy(true);
+    adController.run().then((proceed) => {
+      setAdBusy(false);
+      if (proceed) startGeneration();
+      else showToast('광고를 끝까지 보면 번호를 만들 수 있어요');
+    });
+  }, [isGenerating, adBusy, optionsError, showToast, startGeneration]);
 
   // 키보드 단축키는 항상 최신 handleSpin을 호출한다.
   const spinRef = useRef(handleSpin);
@@ -176,7 +199,7 @@ const Generator = () => {
         error={optionsError}
       />
 
-      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} soundOn={soundOn} />
+      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} soundOn={soundOn} busy={adBusy} adNotice={adNotice} />
 
       {current && (
         <div className="mt-6 max-w-xl mx-auto">

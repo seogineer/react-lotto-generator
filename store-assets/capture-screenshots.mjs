@@ -1,4 +1,4 @@
-// 앱 등록용 미리보기 스크린샷(세로 636x1048)을 만든다. 사용: node capture-screenshots.mjs <미리보기 URL> <CDP 포트>
+// 앱 등록용 미리보기 스크린샷(세로 636x1048)을 만든다. 사용: [SCHEME=light|dark] node capture-screenshots.mjs <미리보기 URL> <CDP 포트> (현재 폴더에 저장)
 import fs from 'node:fs';
 
 const URL_ = process.argv[2] || 'http://127.0.0.1:4173/';
@@ -27,7 +27,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 await send('Page.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: true });
 await send('Emulation.setEmulatedMedia', { features: [
-  { name: 'prefers-color-scheme', value: 'light' },
+  { name: 'prefers-color-scheme', value: process.env.SCHEME || 'light' },
   { name: 'prefers-reduced-motion', value: 'reduce' },
 ] });
 await send('Page.navigate', { url: URL_ });
