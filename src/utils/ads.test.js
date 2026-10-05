@@ -24,13 +24,17 @@ const makeSdk = ({ supported = true } = {}) => {
 };
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const GROUP = 'ait-ad-test-interstitial-id';
+const make = (sdk, extra = {}) =>
+  createAdController({ loadSdk: async () => sdk, adGroupId: GROUP, loadWaitMs: 20, retryDelaysMs: [], ...extra });
 
 describe('createAdController', () => {
   test('광고 그룹 ID가 없으면 비활성이고 바로 진행한다', async () => {
     const { sdk, state } = makeSdk();
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: '' });
+    const ad = make(sdk, { adGroupId: '' });
     expect(ad.isEnabled()).toBe(false);
+    expect(ad.getStatus()).toBe('disabled');
     expect(await ad.run()).toBe(true);
     expect(state.loadCalls).toBe(0);
   });
@@ -41,31 +45,113 @@ describe('createAdController', () => {
     expect(await ad.run()).toBe(true);
   });
 
-  test('SDK 로딩이 실패하면 광고 없이 진행한다', async () => {
-    const ad = createAdController({ loadSdk: async () => { throw new Error('bridge'); }, adGroupId: GROUP });
+  test('SDK 로딩이 실패하면 광고 없이 진행하고 원인을 남긴다', async () => {
+    const ad = make(null, { loadSdk: async () => { throw new Error('bridge'); } });
     expect(await ad.run()).toBe(true);
+    await flush();
+    expect(ad.getStatus()).toBe('unsupported');
+    expect(ad.getLastError()).toContain('bridge');
   });
 
-  test('지원하지 않는 환경이면 광고 없이 진행하고 로드하지 않는다', async () => {
+  test('지원하지 않는 환경이면 광고 없이 진행하고 로드하지 않으며 지원 여부를 기록한다', async () => {
     const { sdk, state } = makeSdk({ supported: false });
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: GROUP });
+    const ad = make(sdk);
     expect(await ad.run()).toBe(true);
+    await flush();
     expect(state.loadCalls).toBe(0);
     expect(state.showCalls).toBe(0);
+    expect(ad.getStatus()).toBe('unsupported');
+    expect(ad.getLastError()).toContain('load=false');
   });
 
-  test('광고가 아직 로드되지 않았으면 보여 주지 않고 진행한다', async () => {
+  test('로드 시작은 loading, loaded 이벤트가 오면 ready가 된다', async () => {
     const { sdk, state } = makeSdk();
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: GROUP });
+    const ad = make(sdk);
+    const seen = [];
+    ad.subscribe(() => seen.push(ad.getStatus()));
+    await ad.preload();
+    expect(ad.getStatus()).toBe('loading');
+    state.loadHandlers.onEvent({ type: 'loaded' });
+    expect(ad.getStatus()).toBe('ready');
+    expect(seen).toEqual(['loading', 'ready']);
+  });
+
+  test('이미 로드 중이거나 준비된 광고는 다시 로드하지 않는다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk);
+    await ad.preload();
+    await ad.preload();
+    expect(state.loadCalls).toBe(1);
+    state.loadHandlers.onEvent({ type: 'loaded' });
+    await ad.preload();
+    expect(state.loadCalls).toBe(1);
+  });
+
+  test('아직 로드를 시작하지 않았으면 보여 주지 않고 진행하며 다음을 위해 로드를 시작한다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk);
     expect(await ad.run()).toBe(true);
     await flush();
     expect(state.showCalls).toBe(0);
-    expect(state.loadCalls).toBe(1); // 다음을 위해 로드를 시작한다
+    expect(state.loadCalls).toBe(1);
+  });
+
+  test('로드 중에 눌렀다면 잠깐 기다렸다가 로드가 끝나면 광고를 보여 준다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk, { loadWaitMs: 500 });
+    await ad.preload(); // 로드 중
+    let result;
+    const pending = ad.run().then((v) => { result = v; });
+    await sleep(10);
+    expect(state.showCalls).toBe(0); // 아직 기다리는 중
+    state.loadHandlers.onEvent({ type: 'loaded' });
+    await sleep(10);
+    expect(state.showCalls).toBe(1);
+    state.showHandlers.onEvent({ type: 'dismissed' });
+    await pending;
+    expect(result).toBe(true);
+  });
+
+  test('로드가 끝나지 않으면 기다린 시간이 지난 뒤 광고 없이 진행한다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk, { loadWaitMs: 30 });
+    await ad.preload();
+    const started = Date.now();
+    expect(await ad.run()).toBe(true);
+    expect(Date.now() - started).toBeGreaterThanOrEqual(25);
+    expect(state.showCalls).toBe(0);
+  });
+
+  test('로드가 실패하면 failed와 오류 메시지를 남기고 정해진 간격으로 다시 시도한다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk, { retryDelaysMs: [10, 10] });
+    await ad.preload();
+    state.loadHandlers.onError(new Error('no fill'));
+    expect(ad.getStatus()).toBe('failed');
+    expect(ad.getLastError()).toBe('no fill');
+    await sleep(40);
+    expect(state.loadCalls).toBe(2); // 첫 재시도
+    state.loadHandlers.onError(new Error('no fill'));
+    await sleep(40);
+    expect(state.loadCalls).toBe(3); // 두 번째 재시도
+    state.loadHandlers.onError(new Error('no fill'));
+    await sleep(40);
+    expect(state.loadCalls).toBe(3); // 재시도 횟수를 넘으면 멈춘다
+  });
+
+  test('재시도 중 로드에 성공하면 ready가 되고 재시도 횟수를 초기화한다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk, { retryDelaysMs: [5] });
+    await ad.preload();
+    state.loadHandlers.onError(new Error('timeout'));
+    await sleep(30);
+    state.loadHandlers.onEvent({ type: 'loaded' });
+    expect(ad.getStatus()).toBe('ready');
   });
 
   test('전면형: 로드된 광고를 보여 주고 닫힌 뒤에 진행하며 다음 광고를 로드한다', async () => {
     const { sdk, state } = makeSdk();
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: GROUP });
+    const ad = make(sdk);
     await ad.preload();
     state.loadHandlers.onEvent({ type: 'loaded' });
 
@@ -85,7 +171,7 @@ describe('createAdController', () => {
 
   test('보상형: 보상을 받고 닫으면 진행한다', async () => {
     const { sdk, state } = makeSdk();
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: 'rewarded', type: 'rewarded' });
+    const ad = make(sdk, { type: 'rewarded' });
     await ad.preload();
     state.loadHandlers.onEvent({ type: 'loaded' });
     const pending = ad.run();
@@ -97,7 +183,7 @@ describe('createAdController', () => {
 
   test('보상형: 보상 없이 닫으면 진행하지 않는다', async () => {
     const { sdk, state } = makeSdk();
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: 'rewarded', type: 'rewarded' });
+    const ad = make(sdk, { type: 'rewarded' });
     await ad.preload();
     state.loadHandlers.onEvent({ type: 'loaded' });
     const pending = ad.run();
@@ -106,31 +192,33 @@ describe('createAdController', () => {
     expect(await pending).toBe(false);
   });
 
-  test('표시에 실패하면(이벤트와 오류 콜백 모두) 진행한다', async () => {
+  test('표시에 실패하면(이벤트와 오류 콜백 모두) 진행하고 원인을 남긴다', async () => {
     for (const fail of [(h) => h.onEvent({ type: 'failedToShow' }), (h) => h.onError(new Error('x'))]) {
       const { sdk, state } = makeSdk();
-      const ad = createAdController({ loadSdk: async () => sdk, adGroupId: GROUP, type: 'rewarded' });
+      const ad = make(sdk, { type: 'rewarded' });
       await ad.preload();
       state.loadHandlers.onEvent({ type: 'loaded' });
       const pending = ad.run();
       await flush();
       fail(state.showHandlers);
       expect(await pending).toBe(true);
+      expect(ad.getLastError()).not.toBe('');
     }
   });
 
   test('showFullScreenAd가 예외를 던지면 진행한다', async () => {
     const { sdk, state } = makeSdk();
     sdk.showFullScreenAd = Object.assign(() => { throw new Error('native'); }, { isSupported: () => true });
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: GROUP });
+    const ad = make(sdk);
     await ad.preload();
     state.loadHandlers.onEvent({ type: 'loaded' });
     expect(await ad.run()).toBe(true);
+    expect(ad.getLastError()).toContain('native');
   });
 
   test('같은 광고에 종료 이벤트가 여러 번 와도 한 번만 진행한다', async () => {
     const { sdk, state } = makeSdk();
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: GROUP });
+    const ad = make(sdk);
     await ad.preload();
     state.loadHandlers.onEvent({ type: 'loaded' });
     const pending = ad.run();
@@ -144,7 +232,7 @@ describe('createAdController', () => {
 
   test('everyN=2이면 두 번째 생성에서만 광고를 보여 준다', async () => {
     const { sdk, state } = makeSdk();
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: GROUP, everyN: 2 });
+    const ad = make(sdk, { everyN: 2 });
     await ad.preload();
     state.loadHandlers.onEvent({ type: 'loaded' });
 
@@ -158,16 +246,16 @@ describe('createAdController', () => {
     expect(await second).toBe(true);
   });
 
-  test('광고를 보여 준 직후 다음 생성은 새로 로드되기 전까지 광고 없이 진행한다', async () => {
+  test('광고를 보여 준 직후 다음 로드가 끝나기 전에 누르면 기다린 뒤 광고 없이 진행한다', async () => {
     const { sdk, state } = makeSdk();
-    const ad = createAdController({ loadSdk: async () => sdk, adGroupId: GROUP });
+    const ad = make(sdk);
     await ad.preload();
     state.loadHandlers.onEvent({ type: 'loaded' });
     const first = ad.run();
     await flush();
     state.showHandlers.onEvent({ type: 'dismissed' });
     await first;
-    // 아직 두 번째 로드의 loaded 이벤트가 오지 않았다
+    // 두 번째 로드의 loaded 이벤트가 아직 오지 않았다
     expect(await ad.run()).toBe(true);
     expect(state.showCalls).toBe(1);
   });

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import axios from 'axios';
 import { BarChart2, FlaskConical, Shuffle, Trash2 } from 'lucide-react';
 import Card from './Card';
@@ -7,7 +7,7 @@ import NumberBoard from './NumberBoard';
 import NumberPicker from './NumberPicker';
 import Ticket from './Ticket';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { FREE_GENERATIONS, adController } from '../utils/ads';
+import { AD_DEBUG, FREE_GENERATIONS, adController } from '../utils/ads';
 import {
   PICK_COUNT,
   formatTicket,
@@ -51,11 +51,19 @@ const Generator = () => {
   // 광고 그룹이 설정된 빌드에서만, 처음 FREE_GENERATIONS회 이후의 번호 생성에 보상형 광고를 요구한다.
   const adEnabled = adController.isEnabled();
   const adRequired = adEnabled && requiresAd({ usedCount, freeCount: FREE_GENERATIONS });
+  // 광고가 실제로 나올 수 있는 상태(준비 중이거나 준비됨)일 때만 '광고 보고' 문구를 보여 준다.
+  const adStatus = useSyncExternalStore(adController.subscribe, adController.getStatus);
+  const adWillShow = adRequired && (adStatus === 'ready' || adStatus === 'loading');
   const adNotice = !adEnabled
     ? ''
-    : adRequired
-      ? '광고를 끝까지 보면 번호를 만들 수 있어요'
-      : `처음 ${FREE_GENERATIONS}회는 광고 없이 만들 수 있고, 이후에는 광고를 끝까지 보면 돼요`;
+    : !adRequired
+      ? `처음 ${FREE_GENERATIONS}회는 광고 없이 만들 수 있고, 이후에는 광고를 끝까지 보면 돼요`
+      : adWillShow
+        ? '광고를 끝까지 보면 번호를 만들 수 있어요'
+        : '지금은 광고를 불러올 수 없어 바로 만들어 드려요';
+  const adDebug = AD_DEBUG && adEnabled
+    ? `광고 상태: ${adStatus}${adController.getLastError() ? ` / ${adController.getLastError()}` : ''}`
+    : '';
 
   const showToast = useCallback((message) => {
     setToast(message);
@@ -187,7 +195,7 @@ const Generator = () => {
         error={optionsError}
       />
 
-      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} busy={adBusy} adRequired={adRequired} adNotice={adNotice} />
+      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} busy={adBusy} adRequired={adWillShow} adNotice={adNotice} adDebug={adDebug} />
 
       {current && (
         <div className="mt-6 max-w-xl mx-auto">

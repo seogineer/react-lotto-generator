@@ -27,7 +27,7 @@ const Slot = ({ value, spinning, runId }) => {
   );
 };
 
-const NumberBoard = ({ values, spinning, runId, onSpin, busy = false, adRequired = false, adNotice = '' }) => {
+const NumberBoard = ({ values, spinning, runId, onSpin, busy = false, adRequired = false, adNotice = '', adDebug = '' }) => {
   const isGenerating = spinning.some(Boolean);
 
   return (
@@ -59,6 +59,7 @@ const NumberBoard = ({ values, spinning, runId, onSpin, busy = false, adRequired
         )}
       </button>
       {adNotice && <p className="mt-2 text-xs text-muted">{adNotice}</p>}
+      {adDebug && <p className="mt-1 text-[11px] font-mono text-faint break-all">{adDebug}</p>}
       <p className="hidden sm:block mt-2 text-xs text-muted">스페이스바를 눌러도 생성할 수 있어요</p>
     </>
   );
