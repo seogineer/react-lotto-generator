@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@apps-in-toss/web-framework": "^3.7.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^6.3.0",
@@ -20,7 +21,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "build:ait": "GENERATE_SOURCEMAP=false PUBLIC_URL=. REACT_APP_BRAND_NAME='번호 연구소' react-scripts build && ait build"
   },
   "eslintConfig": {
     "extends": [

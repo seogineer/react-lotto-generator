@@ -146,7 +146,7 @@ const Generator = () => {
 
       <div className="text-amber-400/80 tracking-[0.5em] text-sm mb-1" aria-hidden="true">♠ ♥ ♦ ♣</div>
       <h1 className="font-display text-3xl sm:text-5xl font-black mb-1 bg-gradient-to-r from-yellow-100 via-amber-400 to-yellow-600 bg-clip-text text-transparent">
-        로또 번호 생성기
+        {process.env.REACT_APP_BRAND_NAME || '로또 번호 생성기'}
       </h1>
       <p className="text-emerald-200/70 text-sm sm:text-base mb-5">SPIN &amp; WIN · 이번 주의 행운 번호</p>
 
