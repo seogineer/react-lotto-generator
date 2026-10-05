@@ -58,7 +58,7 @@ const SlotMachine = ({ values, spinning, runId, onSpin, soundOn }) => {
           onClick={onSpin}
           disabled={isGenerating}
           aria-label="레버 당기기"
-          className="hidden sm:flex flex-col items-center disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 rounded"
+          className="hidden sm:flex flex-col items-center disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded"
         >
           <span className={`w-8 h-8 rounded-full bg-gradient-to-b from-red-400 to-red-700 ring-2 ring-yellow-300 shadow-glow-gold transition-transform duration-300 ${isGenerating ? 'translate-y-12' : ''}`} />
           <span className="w-2 h-16 -mt-1 bg-gradient-to-r from-zinc-300 to-zinc-500 rounded" />
@@ -86,7 +86,7 @@ const SlotMachine = ({ values, spinning, runId, onSpin, soundOn }) => {
           </>
         )}
       </button>
-      <p className="hidden sm:block mt-2 text-xs text-emerald-200/60">스페이스바를 눌러도 돌릴 수 있어요</p>
+      <p className="hidden sm:block mt-2 text-xs text-muted">스페이스바를 눌러도 돌릴 수 있어요</p>
     </>
   );
 };

@@ -5,10 +5,31 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // 색은 index.css의 CSS 변수(라이트 기본, 시스템 다크 모드면 기존 어두운 테마)로 바뀐다.
+      colors: {
+        page: 'var(--c-page)',
+        surface: 'var(--c-surface)',
+        panel: 'var(--c-panel)',
+        'panel-soft': 'var(--c-panel-soft)',
+        'panel-strong': 'var(--c-panel-strong)',
+        heading: 'var(--c-heading)',
+        body: 'var(--c-body)',
+        muted: 'var(--c-muted)',
+        faint: 'var(--c-faint)',
+        gold: 'var(--c-gold)',
+        'gold-strong': 'var(--c-gold-strong)',
+        'gold-soft': 'var(--c-gold-soft)',
+        line: 'var(--c-line)',
+        'line-soft': 'var(--c-line-soft)',
+        'line-strong': 'var(--c-line-strong)',
+        focus: 'var(--c-focus)',
+        danger: 'var(--c-danger)',
+      },
       fontFamily: {
         display: ['"Playfair Display"', 'Georgia', 'serif'],
       },
       boxShadow: {
+        card: 'var(--c-card-shadow)',
         'glow-gold': '0 0 16px rgba(251, 191, 36, 0.55)',
         'glow-felt': '0 0 28px rgba(16, 185, 129, 0.18), inset 0 0 40px rgba(0, 0, 0, 0.35)',
         'glow-yellow': '0 0 14px rgba(250, 204, 21, 0.6)',

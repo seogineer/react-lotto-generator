@@ -3,7 +3,7 @@ import { BALL_RANGES } from '../utils/lotto';
 import { TONE_BALL } from './NumberBall';
 
 const Footer = () => (
-  <footer className="text-center text-xs sm:text-sm text-emerald-200/70 space-y-3 pb-6">
+  <footer className="text-center text-xs sm:text-sm text-muted space-y-3 pb-6">
     <ul className="flex justify-center flex-wrap gap-x-4 gap-y-2" aria-label="공 색상 범례">
       {BALL_RANGES.map(({ tone, label }) => (
         <li key={tone} className="flex items-center gap-1.5">

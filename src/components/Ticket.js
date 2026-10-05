@@ -7,16 +7,16 @@ const IconButton = ({ label, onClick, children }) => (
   <button
     onClick={onClick}
     aria-label={label}
-    className="inline-flex items-center justify-center gap-1.5 min-w-[44px] min-h-[44px] px-2 rounded-lg text-sm text-amber-300 hover:bg-amber-400/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+    className="inline-flex items-center justify-center gap-1.5 min-w-[44px] min-h-[44px] px-2 rounded-lg text-sm text-gold-strong hover:bg-gold-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
   >
     {children}
   </button>
 );
 
 const Ticket = ({ title, sets, onCopy, onShare, canShare }) => (
-  <div className="bg-black/30 border border-amber-500/30 rounded-xl p-3 sm:p-4 text-left">
+  <div className="bg-panel border border-line rounded-xl p-3 sm:p-4 text-left">
     <div className="flex items-center justify-between mb-2">
-      <h3 className="font-bold text-white text-sm sm:text-base">{title}</h3>
+      <h3 className="font-bold text-heading text-sm sm:text-base">{title}</h3>
       <div className="flex">
         <IconButton label="전체 복사" onClick={() => onCopy(sets)}>
           <Copy className="w-4 h-4" aria-hidden="true" />
@@ -34,7 +34,7 @@ const Ticket = ({ title, sets, onCopy, onShare, canShare }) => (
       {sets.map((set, i) => (
         <li key={i} className="flex items-center gap-2 sm:gap-3">
           {sets.length > 1 && (
-            <span className="w-5 font-display font-bold text-amber-400">{gameLabel(i)}</span>
+            <span className="w-5 font-display font-bold text-gold">{gameLabel(i)}</span>
           )}
           <div className="flex gap-1.5 sm:gap-2 flex-1 flex-wrap">
             {set.map((n) => (

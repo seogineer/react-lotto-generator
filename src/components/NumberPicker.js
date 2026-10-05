@@ -22,7 +22,7 @@ const NumberPicker = ({ fixed, excluded, onChange, disabled, error }) => {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="w-full flex items-center justify-between px-4 min-h-[44px] rounded-xl border border-amber-500/30 bg-black/30 text-sm text-emerald-100 hover:border-amber-400/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+        className="w-full flex items-center justify-between px-4 min-h-[44px] rounded-xl border border-line bg-panel text-sm text-body hover:border-line-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <span>
           고급 옵션 · 고정 {fixed.length}개 / 제외 {excluded.length}개
@@ -31,14 +31,14 @@ const NumberPicker = ({ fixed, excluded, onChange, disabled, error }) => {
       </button>
 
       {open && (
-        <div className="mt-3 p-3 rounded-xl border border-amber-500/20 bg-black/20">
+        <div className="mt-3 p-3 rounded-xl border border-line-soft bg-panel-soft">
           {disabled ? (
-            <p className="text-sm text-emerald-200/70 mb-3">
+            <p className="text-sm text-muted mb-3">
               추천 번호는 서버가 정해 주기 때문에 고정/제외를 쓸 수 없어요. 랜덤을 선택해 주세요.
             </p>
           ) : (
-            <p className="text-sm text-emerald-200/70 mb-3">
-              번호를 누를 때마다 <span className="text-amber-300">고정</span> → <span className="line-through">제외</span> → 해제 순으로 바뀌어요. (고정은 최대 {MAX_FIXED}개)
+            <p className="text-sm text-muted mb-3">
+              번호를 누를 때마다 <span className="text-gold-strong">고정</span> → <span className="line-through">제외</span> → 해제 순으로 바뀌어요. (고정은 최대 {MAX_FIXED}개)
             </p>
           )}
           <div className="grid grid-cols-7 sm:grid-cols-9 gap-1.5">
@@ -50,11 +50,11 @@ const NumberPicker = ({ fixed, excluded, onChange, disabled, error }) => {
                   onClick={() => handleToggle(n)}
                   disabled={disabled}
                   aria-label={`${n}${state === 'fixed' ? ' 고정됨' : state === 'excluded' ? ' 제외됨' : ''}`}
-                  className={`min-h-[40px] rounded-lg text-sm font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 disabled:opacity-40 ${state === 'fixed'
+                  className={`min-h-[40px] rounded-lg text-sm font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-40 ${state === 'fixed'
                     ? 'bg-gradient-to-b from-yellow-200 to-amber-500 text-slate-900 border-transparent'
                     : state === 'excluded'
-                      ? 'bg-black/50 text-emerald-100/40 line-through border-white/10'
-                      : 'bg-black/30 text-emerald-100 border-amber-500/20 hover:border-amber-400/60'
+                      ? 'bg-panel-strong text-faint line-through border-line-soft'
+                      : 'bg-panel text-body border-line-soft hover:border-line-strong'
                     }`}
                 >
                   {n}
@@ -65,12 +65,12 @@ const NumberPicker = ({ fixed, excluded, onChange, disabled, error }) => {
           {!disabled && (fixed.length > 0 || excluded.length > 0) && (
             <button
               onClick={() => onChange({ fixed: [], excluded: [] })}
-              className="mt-3 text-sm text-amber-300 underline min-h-[44px]"
+              className="mt-3 text-sm text-gold-strong underline min-h-[44px]"
             >
               모두 해제
             </button>
           )}
-          {error && <p role="alert" className="mt-2 text-sm text-rose-300">{error}</p>}
+          {error && <p role="alert" className="mt-2 text-sm text-danger">{error}</p>}
         </div>
       )}
     </div>

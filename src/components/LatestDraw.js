@@ -23,12 +23,12 @@ const LatestDraw = () => {
                 {[one, two, three, four, five, six].map((n, i) => (
                   <NumberBall key={i} number={n} size="md" />
                 ))}
-                <span className="mx-1 text-emerald-200/70 text-xl" aria-label="보너스">+</span>
+                <span className="mx-1 text-muted text-xl" aria-label="보너스">+</span>
                 <NumberBall number={bonus} size="md" />
               </div>
-              <div className="text-sm text-emerald-100 space-y-1">
-                <p className="text-emerald-200/70">{year}년 {month}월 {day}일 추첨</p>
-                <p><span className="text-amber-400 font-medium">1등 상금</span> {firstWinPrize.toLocaleString()}원 · <span className="text-amber-400 font-medium">당첨자</span> {firstWinners}명</p>
+              <div className="text-sm text-body space-y-1">
+                <p className="text-muted">{year}년 {month}월 {day}일 추첨</p>
+                <p><span className="text-gold font-medium">1등 상금</span> {firstWinPrize.toLocaleString()}원 · <span className="text-gold font-medium">당첨자</span> {firstWinners}명</p>
               </div>
             </div>
           );

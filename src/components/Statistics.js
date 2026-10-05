@@ -27,14 +27,14 @@ const Statistics = () => {
               <div key={number} className="flex items-center gap-3 sm:gap-4">
                 <NumberBall number={number} size="sm" />
                 <div className="flex-1">
-                  <div className="h-3 sm:h-4 bg-black/50 rounded-full overflow-hidden">
+                  <div className="h-3 sm:h-4 bg-panel-strong rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-yellow-300 via-amber-500 to-red-600 shadow-glow-gold transition-all duration-500"
                       style={{ width: `${(frequency / maxFrequency) * 100}%` }}
                     />
                   </div>
                 </div>
-                <span className="text-emerald-100 min-w-[3rem] sm:min-w-[4rem] text-sm sm:text-base">
+                <span className="text-body min-w-[3rem] sm:min-w-[4rem] text-sm sm:text-base">
                   {frequency}회
                 </span>
               </div>
@@ -47,8 +47,8 @@ const Statistics = () => {
         <AsyncState loading={position.loading} error={position.error} hasData={!!position.data} onRetry={position.retry} rows={6}>
           <div className="grid gap-3">
             {positionStats.map(({ position: pos, numbers }) => (
-              <div key={pos} className="flex items-center gap-3 sm:gap-4 bg-black/30 border border-amber-500/30 p-3 rounded-xl">
-                <span className="font-bold text-amber-400 min-w-[3.5rem] text-sm sm:text-base">
+              <div key={pos} className="flex items-center gap-3 sm:gap-4 bg-panel border border-line p-3 rounded-xl">
+                <span className="font-bold text-gold min-w-[3.5rem] text-sm sm:text-base">
                   {pos}번째
                 </span>
                 <div className="flex gap-1.5 sm:gap-2 flex-wrap">

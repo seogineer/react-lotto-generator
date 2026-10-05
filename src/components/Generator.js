@@ -139,16 +139,16 @@ const Generator = () => {
         onClick={() => setSoundOn(!soundOn)}
         aria-pressed={soundOn}
         aria-label={soundOn ? '효과음 끄기' : '효과음 켜기'}
-        className="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-amber-300 hover:bg-amber-400/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+        className="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gold-strong hover:bg-gold-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         {soundOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
       </button>
 
-      <div className="text-amber-400/80 tracking-[0.5em] text-sm mb-1" aria-hidden="true">♠ ♥ ♦ ♣</div>
-      <h1 className="font-display text-3xl sm:text-5xl font-black mb-1 bg-gradient-to-r from-yellow-100 via-amber-400 to-yellow-600 bg-clip-text text-transparent">
+      <div className="text-gold opacity-80 tracking-[0.5em] text-sm mb-1" aria-hidden="true">♠ ♥ ♦ ♣</div>
+      <h1 className="font-display text-3xl sm:text-5xl font-black mb-1 bg-gradient-to-r from-amber-600 via-amber-700 to-yellow-800 dark:from-yellow-100 dark:via-amber-400 dark:to-yellow-600 bg-clip-text text-transparent">
         {process.env.REACT_APP_BRAND_NAME || '로또 번호 생성기'}
       </h1>
-      <p className="text-emerald-200/70 text-sm sm:text-base mb-5">SPIN &amp; WIN · 이번 주의 행운 번호</p>
+      <p className="text-muted text-sm sm:text-base mb-5">SPIN &amp; WIN · 이번 주의 행운 번호</p>
 
       <div className="flex justify-center flex-wrap gap-x-3 gap-y-2 mb-2">
         <div className="flex gap-2">
@@ -161,13 +161,13 @@ const Generator = () => {
             랜덤
           </ToggleButton>
         </div>
-        <span className="hidden sm:block w-px bg-amber-500/30" aria-hidden="true" />
+        <span className="hidden sm:block w-px bg-line" aria-hidden="true" />
         <div className="flex gap-2">
           <ToggleButton active={games === 1} onClick={() => setGames(1)}>1게임</ToggleButton>
           <ToggleButton active={games === MAX_GAMES} onClick={() => setGames(MAX_GAMES)}>{MAX_GAMES}게임</ToggleButton>
         </div>
       </div>
-      <p className="text-xs sm:text-sm text-emerald-200/70 mb-5">{MODE_HELP[mode]}</p>
+      <p className="text-xs sm:text-sm text-muted mb-5">{MODE_HELP[mode]}</p>
 
       <NumberPicker
         fixed={options.fixed}
@@ -192,12 +192,12 @@ const Generator = () => {
       )}
 
       {pastHistory.length > 0 && (
-        <div className="mt-8 pt-6 border-t border-amber-500/30 max-w-xl mx-auto">
+        <div className="mt-8 pt-6 border-t border-line max-w-xl mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-emerald-200/70">최근 기록</h3>
+            <h3 className="text-sm font-medium text-muted">최근 기록</h3>
             <button
               onClick={() => { setHistory([]); setCurrent(null); }}
-              className="inline-flex items-center gap-1 min-h-[44px] px-2 text-sm text-emerald-200/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 rounded"
+              className="inline-flex items-center gap-1 min-h-[44px] px-2 text-sm text-muted hover:text-heading focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded"
             >
               <Trash2 className="w-4 h-4" aria-hidden="true" />
               기록 지우기
