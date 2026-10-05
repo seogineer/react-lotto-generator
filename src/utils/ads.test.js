@@ -173,25 +173,19 @@ describe('createAdController', () => {
   });
 });
 
-describe('requiresAd (보상형 광고가 필요한 생성)', () => {
-  const none = { fixed: [], excluded: [] };
-
-  test('1게임은 추천/랜덤 모두 광고 없이 무료', () => {
-    expect(requiresAd({ mode: 'recommend', games: 1, options: none })).toBe(false);
-    expect(requiresAd({ mode: 'random', games: 1, options: none })).toBe(false);
+describe('requiresAd (무료 횟수 이후에만 보상형 광고 필요)', () => {
+  test('처음 1회는 무료이고 그 이후부터 광고가 필요하다', () => {
+    expect(requiresAd({ usedCount: 0, freeCount: 1 })).toBe(false);
+    expect(requiresAd({ usedCount: 1, freeCount: 1 })).toBe(true);
+    expect(requiresAd({ usedCount: 5, freeCount: 1 })).toBe(true);
   });
 
-  test('5게임은 광고가 필요하다', () => {
-    expect(requiresAd({ mode: 'recommend', games: 5, options: none })).toBe(true);
-    expect(requiresAd({ mode: 'random', games: 5, options: none })).toBe(true);
+  test('무료 횟수가 3이면 3번까지 무료이고 네 번째부터 광고가 필요하다', () => {
+    expect(requiresAd({ usedCount: 2, freeCount: 3 })).toBe(false);
+    expect(requiresAd({ usedCount: 3, freeCount: 3 })).toBe(true);
   });
 
-  test('랜덤 모드에서 번호 고정 또는 제외를 쓰면 광고가 필요하다', () => {
-    expect(requiresAd({ mode: 'random', games: 1, options: { fixed: [7], excluded: [] } })).toBe(true);
-    expect(requiresAd({ mode: 'random', games: 1, options: { fixed: [], excluded: [13] } })).toBe(true);
-  });
-
-  test('추천 모드는 서버가 번호를 정하므로 고정/제외 값이 남아 있어도 광고가 필요 없다', () => {
-    expect(requiresAd({ mode: 'recommend', games: 1, options: { fixed: [7], excluded: [13] } })).toBe(false);
+  test('무료 횟수가 0이면 처음부터 매번 광고가 필요하다', () => {
+    expect(requiresAd({ usedCount: 0, freeCount: 0 })).toBe(true);
   });
 });

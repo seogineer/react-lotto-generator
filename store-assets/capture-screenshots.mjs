@@ -34,7 +34,7 @@ await send('Page.navigate', { url: URL_ });
 
 // 데이터가 모두 뜰 때까지 기다린다 (최신 회차, 빈도, 기록)
 for (let i = 0; i < 60; i += 1) {
-  const ok = await evalJs(`document.body.innerText.includes('회차별 당첨 기록') && document.querySelectorAll('section').length >= 4 && !!document.body.innerText.match(/최신 당첨 번호 · \\d+회/) && document.body.innerText.includes('187회') || document.body.innerText.match(/\\d+회\\s*\\n/) !== null`);
+  const ok = await evalJs(`document.body.innerText.includes('회차별 기록') && document.querySelectorAll('section').length >= 4 && /최신 회차 번호 · \\d+회/.test(document.body.innerText) && /\\d+회\\s*\\n/.test(document.body.innerText)`);
   if (ok) break;
   await sleep(500);
 }
@@ -54,7 +54,7 @@ const shoot = async (name, scrollExpr) => {
 const sectionTop = (title) => `(() => { const h = [...document.querySelectorAll('h2')].find((e) => e.textContent.includes('${title}')); return Math.max(0, h.closest('section').getBoundingClientRect().top + window.scrollY - 16); })()`;
 
 await shoot('screenshot-1-generate.png', '0');
-await shoot('screenshot-2-latest-frequency.png', await evalJs(sectionTop('최신 당첨 번호')));
+await shoot('screenshot-2-latest-frequency.png', await evalJs(sectionTop('최신 회차 번호')));
 await shoot('screenshot-3-position.png', await evalJs(sectionTop('자리별 빈도 분석')));
-await shoot('screenshot-4-history.png', await evalJs(sectionTop('회차별 당첨 기록')));
+await shoot('screenshot-4-history.png', await evalJs(sectionTop('회차별 기록')));
 ws.close();

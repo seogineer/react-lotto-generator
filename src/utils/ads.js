@@ -102,6 +102,14 @@ export const createAdController = ({ loadSdk, adGroupId, type = 'interstitial', 
 
 const IS_MINI_APP = process.env.REACT_APP_AIT === '1';
 
+// 앱을 열 때마다 처음 몇 번의 번호 생성은 광고 없이 쓸 수 있게 한다(기본 1회, 0이면 매번 광고).
+const parseFreeCount = (raw) => {
+  if (raw === undefined || raw === '') return 1;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 1;
+};
+export const FREE_GENERATIONS = parseFreeCount(process.env.REACT_APP_AD_FREE_GENERATIONS);
+
 export const AD_TYPE = process.env.REACT_APP_AD_TYPE === 'interstitial' ? 'interstitial' : 'rewarded';
 
 export const adController = createAdController({

@@ -7,10 +7,9 @@ import NumberBoard from './NumberBoard';
 import NumberPicker from './NumberPicker';
 import Ticket from './Ticket';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { adController } from '../utils/ads';
+import { FREE_GENERATIONS, adController } from '../utils/ads';
 import {
   PICK_COUNT,
-  MAX_GAMES,
   formatTicket,
   generateRandomSets,
   sortNumbers,
@@ -23,7 +22,7 @@ const MAX_HISTORY = 10;
 const REEL_STOP_INTERVAL = 350;
 const MIN_SPIN_TIME = 900;
 const MODE_HELP = {
-  recommend: '역대 당첨 통계를 분석해 서버가 번호를 제안해요.',
+  recommend: '역대 회차 통계를 분석해 서버가 번호를 제안해요.',
   random: '1~45 중에서 무작위로 뽑아요. 번호 고정/제외도 쓸 수 있어요.',
 };
 
@@ -34,7 +33,7 @@ const fetchRecommendSet = async () => {
 
 const Generator = () => {
   const [mode, setMode] = useState('recommend');
-  const [games, setGames] = useState(1);
+  const [usedCount, setUsedCount] = useState(0);
   const [options, setOptions] = useState({ fixed: [], excluded: [] });
   const [reelValues, setReelValues] = useState([]);
   const [runId, setRunId] = useState(0);
@@ -49,14 +48,14 @@ const Generator = () => {
   const isGenerating = spinning.some(Boolean);
   const optionsError = mode === 'random' ? validateOptions(options) : null;
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
-  // 광고 그룹이 설정된 빌드에서만, 5게임 생성과 번호 고정/제외에 보상형 광고를 요구한다.
+  // 광고 그룹이 설정된 빌드에서만, 처음 FREE_GENERATIONS회 이후의 번호 생성에 보상형 광고를 요구한다.
   const adEnabled = adController.isEnabled();
-  const adRequired = adEnabled && requiresAd({ mode, games, options });
+  const adRequired = adEnabled && requiresAd({ usedCount, freeCount: FREE_GENERATIONS });
   const adNotice = !adEnabled
     ? ''
     : adRequired
-      ? '광고를 끝까지 보면 이용할 수 있어요'
-      : '5게임 생성과 번호 고정·제외는 광고를 끝까지 보면 이용할 수 있어요';
+      ? '광고를 끝까지 보면 번호를 만들 수 있어요'
+      : `처음 ${FREE_GENERATIONS}회는 광고 없이 만들 수 있고, 이후에는 광고를 끝까지 보면 돼요`;
 
   const showToast = useCallback((message) => {
     setToast(message);
@@ -73,6 +72,7 @@ const Generator = () => {
     const entry = { id: Date.now(), sets };
     setCurrent(entry);
     setHistory((prev) => [entry, ...prev].slice(0, MAX_HISTORY));
+    setUsedCount((count) => count + 1); // 생성이 끝났을 때만 무료 횟수를 소모한다
     setAnnounce(`생성된 번호. ${formatTicket(sets)}`);
   }, [setHistory]);
 
@@ -82,8 +82,8 @@ const Generator = () => {
     setSpinning(Array(PICK_COUNT).fill(true));
 
     const make = mode === 'random'
-      ? async () => generateRandomSets(games, options)
-      : () => Promise.all(Array.from({ length: games }, fetchRecommendSet));
+      ? async () => generateRandomSets(1, options)
+      : () => Promise.all([fetchRecommendSet()]);
     const minSpin = new Promise((resolve) => setTimeout(resolve, MIN_SPIN_TIME));
 
     Promise.all([make(), minSpin]).then(([sets]) => {
@@ -100,7 +100,7 @@ const Generator = () => {
       setSpinning(Array(PICK_COUNT).fill(false));
       showToast('번호를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
     });
-  }, [mode, games, options, finish, showToast]);
+  }, [mode, options, finish, showToast]);
 
   // 번호 생성을 누르면 (설정된 경우) 광고를 먼저 보여 주고, 끝나면 생성을 시작한다.
   // 광고가 준비되지 않았거나 실패하면 광고 없이 바로 생성한다.
@@ -118,7 +118,7 @@ const Generator = () => {
     adController.run().then((proceed) => {
       setAdBusy(false);
       if (proceed) startGeneration();
-      else showToast('광고를 끝까지 보면 이용할 수 있어요');
+      else showToast('광고를 끝까지 보면 번호를 만들 수 있어요');
     });
   }, [isGenerating, adBusy, adRequired, optionsError, showToast, startGeneration]);
 
@@ -163,7 +163,7 @@ const Generator = () => {
       <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 text-heading">
         {process.env.REACT_APP_BRAND_NAME || '로또 번호 생성기'}
       </h1>
-      <p className="text-muted text-sm sm:text-base mb-5">역대 당첨 데이터를 분석해 번호를 만들어 드려요</p>
+      <p className="text-muted text-sm sm:text-base mb-5">역대 회차 데이터를 분석해 번호를 만들어 드려요</p>
 
       <div className="flex justify-center flex-wrap gap-x-3 gap-y-2 mb-2">
         <div className="flex gap-2">
@@ -174,14 +174,6 @@ const Generator = () => {
           <ToggleButton active={mode === 'random'} onClick={() => setMode('random')}>
             <Shuffle className="w-4 h-4" aria-hidden="true" />
             랜덤
-          </ToggleButton>
-        </div>
-        <span className="hidden sm:block w-px bg-line" aria-hidden="true" />
-        <div className="flex gap-2">
-          <ToggleButton active={games === 1} onClick={() => setGames(1)}>1게임</ToggleButton>
-          <ToggleButton active={games === MAX_GAMES} onClick={() => setGames(MAX_GAMES)}>
-            {MAX_GAMES}게임
-            {adEnabled && <span className="text-[10px] leading-none font-semibold rounded border border-current px-1 py-0.5 opacity-80">광고</span>}
           </ToggleButton>
         </div>
       </div>

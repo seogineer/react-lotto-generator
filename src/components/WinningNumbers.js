@@ -32,14 +32,14 @@ const WinningNumbers = () => {
   };
 
   return (
-    <Card title="회차별 당첨 기록" icon={ClipboardList}>
+    <Card title="회차별 기록" icon={ClipboardList}>
       <AsyncState loading={loading} error={error} hasData={!!data} onRetry={retry} rows={4}>
         <div className={`grid gap-3 transition-opacity ${loading ? 'opacity-60' : ''}`}>
           {data?.content.map(({ round, date, one, two, three, four, five, six, bonus, firstWinners, firstWinPrize }) => (
             <div key={round} className="bg-panel border border-line p-3 sm:p-4 rounded-xl">
               <div className="flex items-center justify-between mb-3 text-sm sm:text-base">
                 <span className="font-bold text-heading">{round}회</span>
-                <span className="text-muted">{date.split('-')[0]}년 {date.split('-')[1]}월 {date.split('-')[2]}일 추첨</span>
+                <span className="text-muted">{date.split('-')[0]}년 {date.split('-')[1]}월 {date.split('-')[2]}일 회차</span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2.5 mb-3">
                 {[one, two, three, four, five, six].map((n, i) => (
@@ -50,11 +50,11 @@ const WinningNumbers = () => {
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 text-sm text-body">
                 <div className="flex items-center gap-2">
-                  <span className="text-accent font-medium">1등 상금:</span>
+                  <span className="text-accent font-medium">1등 지급액:</span>
                   <span>{firstWinPrize.toLocaleString()}원</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-accent font-medium">당첨자 수:</span>
+                  <span className="text-accent font-medium">1등 인원:</span>
                   <span>{firstWinners}명</span>
                 </div>
               </div>
