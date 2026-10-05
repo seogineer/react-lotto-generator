@@ -40,3 +40,12 @@
 - 로고: logo-numberlab-600.png (600x600, PNG, 투명 없음, 모서리 둥글지 않음)
 - 스크린샷(세로 636x1048): screenshot-1-generate.png, screenshot-2-latest-frequency.png, screenshot-3-position.png, screenshot-4-history.png
 - 재생성: python3 make_logo.py / node capture-screenshots.mjs <미리보기 URL> <CDP 포트>
+
+## 인앱 광고 (보상형)
+- 광고 종류: 보상형. 1게임 번호 생성은 광고 없이 무료이고, 5게임 생성과 번호 고정/제외(고급 옵션)는 광고를 끝까지 본 경우에만 이용한다.
+- 보상은 userEarnedReward 이벤트를 받았을 때만 지급하고, 광고가 준비되지 않았거나 실패하면 광고 없이 진행한다.
+- 광고가 필요한 버튼은 '광고 보고 번호 생성하기'로 표시하고, 5게임 토글에 '광고' 표시와 안내 문구를 둔다.
+- 빌드: 테스트 `npm run build:ait:ad-test`(보상형 테스트 ID만 사용), 운영 `REACT_APP_AD_GROUP_ID=<광고 그룹 ID> npm run build:ait`
+- 전면형 그룹을 쓰려면 `REACT_APP_AD_TYPE=interstitial`을 함께 지정한다. 종류가 어긋나면 보상이 무시되거나 영영 진행되지 않는다.
+- 광고는 샌드박스로 확인할 수 없으므로 콘솔 출시 QR로 토스 앱에서 테스트한다. 테스트에는 반드시 테스트 ID만 쓴다.
+

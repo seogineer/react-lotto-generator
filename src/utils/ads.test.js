@@ -1,4 +1,5 @@
 import { createAdController } from './ads';
+import { requiresAd } from './lotto';
 
 // 광고 SDK를 흉내 낸다. loaded/보상/종료 이벤트를 테스트가 직접 일으킨다.
 const makeSdk = ({ supported = true } = {}) => {
@@ -169,5 +170,28 @@ describe('createAdController', () => {
     // 아직 두 번째 로드의 loaded 이벤트가 오지 않았다
     expect(await ad.run()).toBe(true);
     expect(state.showCalls).toBe(1);
+  });
+});
+
+describe('requiresAd (보상형 광고가 필요한 생성)', () => {
+  const none = { fixed: [], excluded: [] };
+
+  test('1게임은 추천/랜덤 모두 광고 없이 무료', () => {
+    expect(requiresAd({ mode: 'recommend', games: 1, options: none })).toBe(false);
+    expect(requiresAd({ mode: 'random', games: 1, options: none })).toBe(false);
+  });
+
+  test('5게임은 광고가 필요하다', () => {
+    expect(requiresAd({ mode: 'recommend', games: 5, options: none })).toBe(true);
+    expect(requiresAd({ mode: 'random', games: 5, options: none })).toBe(true);
+  });
+
+  test('랜덤 모드에서 번호 고정 또는 제외를 쓰면 광고가 필요하다', () => {
+    expect(requiresAd({ mode: 'random', games: 1, options: { fixed: [7], excluded: [] } })).toBe(true);
+    expect(requiresAd({ mode: 'random', games: 1, options: { fixed: [], excluded: [13] } })).toBe(true);
+  });
+
+  test('추천 모드는 서버가 번호를 정하므로 고정/제외 값이 남아 있어도 광고가 필요 없다', () => {
+    expect(requiresAd({ mode: 'recommend', games: 1, options: { fixed: [7], excluded: [13] } })).toBe(false);
   });
 });

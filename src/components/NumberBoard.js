@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FlaskConical, Loader2 } from 'lucide-react';
+import { FlaskConical, Loader2, PlayCircle } from 'lucide-react';
 import { LOTTO_MAX, PICK_COUNT } from '../utils/lotto';
 import NumberBall from './NumberBall';
 
@@ -27,7 +27,7 @@ const Slot = ({ value, spinning, runId }) => {
   );
 };
 
-const NumberBoard = ({ values, spinning, runId, onSpin, busy = false, adNotice = '' }) => {
+const NumberBoard = ({ values, spinning, runId, onSpin, busy = false, adRequired = false, adNotice = '' }) => {
   const isGenerating = spinning.some(Boolean);
 
   return (
@@ -53,8 +53,8 @@ const NumberBoard = ({ values, spinning, runId, onSpin, busy = false, adNotice =
           </>
         ) : (
           <>
-            <FlaskConical className="w-5 h-5" aria-hidden="true" />
-            번호 생성하기
+            {adRequired ? <PlayCircle className="w-5 h-5" aria-hidden="true" /> : <FlaskConical className="w-5 h-5" aria-hidden="true" />}
+            {adRequired ? '광고 보고 번호 생성하기' : '번호 생성하기'}
           </>
         )}
       </button>

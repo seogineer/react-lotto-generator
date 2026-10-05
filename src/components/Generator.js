@@ -7,13 +7,14 @@ import NumberBoard from './NumberBoard';
 import NumberPicker from './NumberPicker';
 import Ticket from './Ticket';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { AD_TYPE, adController } from '../utils/ads';
+import { adController } from '../utils/ads';
 import {
   PICK_COUNT,
   MAX_GAMES,
   formatTicket,
   generateRandomSets,
   sortNumbers,
+  requiresAd,
   validateOptions,
 } from '../utils/lotto';
 
@@ -48,9 +49,14 @@ const Generator = () => {
   const isGenerating = spinning.some(Boolean);
   const optionsError = mode === 'random' ? validateOptions(options) : null;
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
-  const adNotice = adController.isEnabled()
-    ? (AD_TYPE === 'rewarded' ? '광고를 끝까지 보면 번호를 만들 수 있어요' : '번호를 만들 때 광고가 나올 수 있어요')
-    : '';
+  // 광고 그룹이 설정된 빌드에서만, 5게임 생성과 번호 고정/제외에 보상형 광고를 요구한다.
+  const adEnabled = adController.isEnabled();
+  const adRequired = adEnabled && requiresAd({ mode, games, options });
+  const adNotice = !adEnabled
+    ? ''
+    : adRequired
+      ? '광고를 끝까지 보면 이용할 수 있어요'
+      : '5게임 생성과 번호 고정·제외는 광고를 끝까지 보면 이용할 수 있어요';
 
   const showToast = useCallback((message) => {
     setToast(message);
@@ -104,7 +110,7 @@ const Generator = () => {
       showToast(optionsError);
       return;
     }
-    if (!adController.isEnabled()) {
+    if (!adRequired) {
       startGeneration();
       return;
     }
@@ -112,9 +118,9 @@ const Generator = () => {
     adController.run().then((proceed) => {
       setAdBusy(false);
       if (proceed) startGeneration();
-      else showToast('광고를 끝까지 보면 번호를 만들 수 있어요');
+      else showToast('광고를 끝까지 보면 이용할 수 있어요');
     });
-  }, [isGenerating, adBusy, optionsError, showToast, startGeneration]);
+  }, [isGenerating, adBusy, adRequired, optionsError, showToast, startGeneration]);
 
   // 키보드 단축키는 항상 최신 handleSpin을 호출한다.
   const spinRef = useRef(handleSpin);
@@ -173,7 +179,10 @@ const Generator = () => {
         <span className="hidden sm:block w-px bg-line" aria-hidden="true" />
         <div className="flex gap-2">
           <ToggleButton active={games === 1} onClick={() => setGames(1)}>1게임</ToggleButton>
-          <ToggleButton active={games === MAX_GAMES} onClick={() => setGames(MAX_GAMES)}>{MAX_GAMES}게임</ToggleButton>
+          <ToggleButton active={games === MAX_GAMES} onClick={() => setGames(MAX_GAMES)}>
+            {MAX_GAMES}게임
+            {adEnabled && <span className="text-[10px] leading-none font-semibold rounded border border-current px-1 py-0.5 opacity-80">광고</span>}
+          </ToggleButton>
         </div>
       </div>
       <p className="text-xs sm:text-sm text-muted mb-5">{MODE_HELP[mode]}</p>
@@ -186,7 +195,7 @@ const Generator = () => {
         error={optionsError}
       />
 
-      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} busy={adBusy} adNotice={adNotice} />
+      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} busy={adBusy} adRequired={adRequired} adNotice={adNotice} />
 
       {current && (
         <div className="mt-6 max-w-xl mx-auto">

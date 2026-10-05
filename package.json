@@ -23,8 +23,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "build:ait": "REACT_APP_AIT=1 GENERATE_SOURCEMAP=false PUBLIC_URL=. REACT_APP_BRAND_NAME='번호 연구소' react-scripts build && ait build",
-    "build:ait:ad-test": "REACT_APP_AD_GROUP_ID=ait-ad-test-interstitial-id npm run build:ait",
-    "build:ait:ad-test-rewarded": "REACT_APP_AD_TYPE=rewarded REACT_APP_AD_GROUP_ID=ait-ad-test-rewarded-id npm run build:ait"
+    "build:ait:ad-test": "REACT_APP_AD_GROUP_ID=ait-ad-test-rewarded-id npm run build:ait"
   },
   "eslintConfig": {
     "extends": [

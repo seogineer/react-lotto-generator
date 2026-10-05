@@ -50,6 +50,11 @@ export const generateRandomSet = ({ fixed = [], excluded = [] } = {}, rng = Math
 export const generateRandomSets = (count, options = {}, rng = Math.random) =>
   Array.from({ length: count }, () => generateRandomSet(options, rng));
 
+// 5게임 생성과 번호 고정/제외(고급 옵션)는 보상형 광고를 끝까지 본 경우에만 이용할 수 있다. 1게임은 무료.
+// 추천 모드는 서버가 번호를 정하므로 고정/제외 옵션은 적용되지 않는다.
+export const requiresAd = ({ mode, games, options }) =>
+  games > 1 || (mode === 'random' && (options.fixed.length > 0 || options.excluded.length > 0));
+
 export const nextPickState = (state) => {
   if (state === undefined) return 'fixed';
   if (state === 'fixed') return 'excluded';
