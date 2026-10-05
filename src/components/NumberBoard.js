@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlaskConical, Loader2 } from 'lucide-react';
 import { LOTTO_MAX, PICK_COUNT } from '../utils/lotto';
-import { playTick } from '../utils/sound';
 import NumberBall from './NumberBall';
 
 const prefersReducedMotion = () =>
@@ -28,14 +27,8 @@ const Slot = ({ value, spinning, runId }) => {
   );
 };
 
-const NumberBoard = ({ values, spinning, runId, onSpin, soundOn, busy = false, adNotice = '' }) => {
+const NumberBoard = ({ values, spinning, runId, onSpin, busy = false, adNotice = '' }) => {
   const isGenerating = spinning.some(Boolean);
-
-  useEffect(() => {
-    if (!soundOn || !isGenerating) return undefined;
-    const id = setInterval(playTick, 110);
-    return () => clearInterval(id);
-  }, [soundOn, isGenerating]);
 
   return (
     <>

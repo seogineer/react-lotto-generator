@@ -43,12 +43,22 @@ inner = flask.filter(ImageFilter.GaussianBlur(22 * S / 1.645)).point(lambda v: 2
 liquid = Image.composite(liquid, Image.new("L", (W, W), 0), inner)
 img.paste(Image.new("RGB", (W, W), LIQUID), mask=liquid)
 
-# 번호 공 3개 (앱의 공 색: 노랑, 파랑, 로즈)
+# 번호 타일 3개 (앱의 시료 타일과 같은 모양: 연한 바탕, 같은 계열의 테두리, 고정폭 숫자)
+from PIL import ImageFont
 draw = ImageDraw.Draw(img, "RGBA")
-balls = [((232, 440, 40), (250, 204, 21)), ((304, 412, 40), (59, 130, 246)), ((374, 442, 40), (244, 63, 94))]
-for (cx, cy, r), color in balls:
-    draw.ellipse([P(cx - r, cy - r), P(cx + r, cy + r)], fill=color + (255,))
-    draw.ellipse([P(cx - r * 0.55, cy - r * 0.62), P(cx - r * 0.05, cy - r * 0.2)], fill=(255, 255, 255, 120))
+try:
+    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 36 * S)
+except OSError:
+    font = ImageFont.load_default()
+tiles = [
+    (196, 410, "7", (254, 249, 195), (234, 179, 8), (113, 63, 18)),     # 1~10 노랑
+    (268, 392, "17", (219, 234, 254), (59, 130, 246), (30, 58, 138)),   # 11~20 파랑
+    (340, 410, "26", (255, 228, 230), (244, 63, 94), (136, 19, 55)),    # 21~30 로즈
+]
+T = 64
+for x, y, label, fill, border, ink in tiles:
+    draw.rounded_rectangle([P(x, y), P(x + T, y + T)], radius=11 * S, fill=fill + (255,), outline=border + (255,), width=5 * S)
+    draw.text(P(x + T / 2, y + T / 2 + 1), label, font=font, fill=ink + (255,), anchor="mm")
 
 # 위로 올라오는 기포(분석 중인 느낌)
 for cx, cy, r in [(300, 306, 11), (320, 262, 8), (290, 226, 6), (310, 188, 4.5)]:

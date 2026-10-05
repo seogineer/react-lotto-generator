@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { BarChart2, FlaskConical, Shuffle, Volume2, VolumeX, Trash2 } from 'lucide-react';
+import { BarChart2, FlaskConical, Shuffle, Trash2 } from 'lucide-react';
 import Card from './Card';
 import ToggleButton from './ToggleButton';
 import NumberBoard from './NumberBoard';
 import NumberPicker from './NumberPicker';
 import Ticket from './Ticket';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { playDone, playStop } from '../utils/sound';
 import { AD_TYPE, adController } from '../utils/ads';
 import {
   PICK_COUNT,
@@ -41,7 +40,6 @@ const Generator = () => {
   const [spinning, setSpinning] = useState(Array(PICK_COUNT).fill(false));
   const [current, setCurrent] = useState(null);
   const [history, setHistory] = useLocalStorage('lotto-history', []);
-  const [soundOn, setSoundOn] = useLocalStorage('lotto-sound', false);
   const [toast, setToast] = useState('');
   const [announce, setAnnounce] = useState('');
   const [adBusy, setAdBusy] = useState(false);
@@ -70,8 +68,7 @@ const Generator = () => {
     setCurrent(entry);
     setHistory((prev) => [entry, ...prev].slice(0, MAX_HISTORY));
     setAnnounce(`생성된 번호. ${formatTicket(sets)}`);
-    if (soundOn) playDone();
-  }, [setHistory, soundOn]);
+  }, [setHistory]);
 
   const startGeneration = useCallback(() => {
     setCurrent(null);
@@ -89,7 +86,6 @@ const Generator = () => {
       sets[0].forEach((_, index) => {
         setTimeout(() => {
           setSpinning((prev) => prev.map((s, i) => (i === index ? false : s)));
-          if (soundOn) playStop();
           if (index === sets[0].length - 1) finish(sets);
         }, index * REEL_STOP_INTERVAL);
       });
@@ -98,7 +94,7 @@ const Generator = () => {
       setSpinning(Array(PICK_COUNT).fill(false));
       showToast('번호를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
     });
-  }, [mode, games, options, soundOn, finish, showToast]);
+  }, [mode, games, options, finish, showToast]);
 
   // 번호 생성을 누르면 (설정된 경우) 광고를 먼저 보여 주고, 끝나면 생성을 시작한다.
   // 광고가 준비되지 않았거나 실패하면 광고 없이 바로 생성한다.
@@ -155,15 +151,6 @@ const Generator = () => {
 
   return (
     <Card className="text-center relative overflow-hidden">
-      <button
-        onClick={() => setSoundOn(!soundOn)}
-        aria-pressed={soundOn}
-        aria-label={soundOn ? '효과음 끄기' : '효과음 켜기'}
-        className="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-accent-strong hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      >
-        {soundOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-      </button>
-
       <div className="flex justify-center mb-2 text-accent" aria-hidden="true">
         <FlaskConical className="w-8 h-8 sm:w-10 sm:h-10" />
       </div>
@@ -199,7 +186,7 @@ const Generator = () => {
         error={optionsError}
       />
 
-      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} soundOn={soundOn} busy={adBusy} adNotice={adNotice} />
+      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} busy={adBusy} adNotice={adNotice} />
 
       {current && (
         <div className="mt-6 max-w-xl mx-auto">
