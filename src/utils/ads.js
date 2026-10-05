@@ -3,6 +3,8 @@
 // - 광고는 미리 로드해 두고(load -> show -> 다음 load), 준비되지 않았거나 지원되지 않거나 실패하면
 //   광고 없이 바로 진행한다. 광고 문제가 핵심 기능(번호 생성)을 막지 않게 하는 것이 원칙이다.
 // - 로드가 실패하면 몇 번 다시 시도하고, 사용자가 누른 시점에 로드 중이면 잠깐 기다린다.
+//   Android에서는 로드 실패 시 에러 콜백이 오지 않을 수 있어(앱인토스 공지), 일정 시간 안에 loaded가 오지 않으면
+//   실패로 보고 다시 시도한다. 운영 광고 그룹은 No fill(광고 재고 없음)이 자주 나올 수 있다.
 // - 상태(idle/loading/ready/failed/unsupported/disabled)와 마지막 오류를 노출해 화면이 광고가 실제로 나올지
 //   알 수 있게 한다.
 // - 광고 종류(전면형/보상형)는 콘솔에서 만든 광고 그룹 ID로 정해진다. 기본은 보상형이며(REACT_APP_AD_TYPE),
@@ -17,6 +19,7 @@ export const createAdController = ({
   type = 'interstitial',
   everyN = 1,
   loadWaitMs = 3000,
+  loadTimeoutMs = 10000,
   retryDelaysMs = [2000, 5000, 15000],
 }) => {
   let sdk; // undefined: 아직 시도 안 함, null: 사용할 수 없음
@@ -24,7 +27,15 @@ export const createAdController = ({
   let lastError = '';
   let count = 0;
   let retries = 0;
+  let attempt = 0;
   const listeners = new Set();
+
+  // 테스트와 서버 환경에서 타이머가 프로세스 종료를 막지 않게 한다.
+  const later = (fn, ms) => {
+    const timer = setTimeout(fn, ms);
+    if (typeof timer?.unref === 'function') timer.unref();
+    return timer;
+  };
 
   const isEnabled = () => Boolean(adGroupId) && typeof loadSdk === 'function';
 
@@ -68,12 +79,18 @@ export const createAdController = ({
     }
   };
 
-  const onLoadFailed = (error) => {
-    setStatus('failed', error?.message ?? String(error));
+  // 같은 로드 시도에서 에러 콜백과 시간 초과가 모두 와도 재시도는 한 번만 예약한다.
+  const onLoadFailed = (error, mine) => {
+    const message = error?.message ?? String(error);
+    if (mine !== attempt || status !== 'loading') {
+      if (message) lastError = message; // 이미 처리된 시도의 늦은 오류는 원인만 갱신한다
+      return;
+    }
+    setStatus('failed', message);
     if (retries < retryDelaysMs.length) {
       const delay = retryDelaysMs[retries];
       retries += 1;
-      setTimeout(() => preload(), delay); // eslint-disable-line no-use-before-define
+      later(() => preload(), delay); // eslint-disable-line no-use-before-define
     }
   };
 
@@ -89,20 +106,24 @@ export const createAdController = ({
       return;
     }
     if (status === 'ready' || status === 'loading') return; // 동시에 시작된 로드가 있으면 중복하지 않는다
+    attempt += 1;
+    const mine = attempt;
     setStatus('loading');
+    // 에러 콜백이 오지 않는 환경(Android)에서도 멈추지 않도록 시간 초과를 둔다.
+    later(() => onLoadFailed(new Error('광고 로드 시간 초과(응답 없음)'), mine), loadTimeoutMs);
     try {
       s.loadFullScreenAd({
         options: { adGroupId },
         onEvent: (event) => {
           if (event.type === 'loaded') {
             retries = 0;
-            setStatus('ready');
+            setStatus('ready'); // 시간 초과 뒤에 늦게 와도 준비된 광고로 쓴다
           }
         },
-        onError: onLoadFailed,
+        onError: (error) => onLoadFailed(error, mine),
       });
     } catch (error) {
-      onLoadFailed(error);
+      onLoadFailed(error, mine);
     }
   };
 

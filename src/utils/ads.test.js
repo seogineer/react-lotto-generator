@@ -139,6 +139,38 @@ describe('createAdController', () => {
     expect(state.loadCalls).toBe(3); // 재시도 횟수를 넘으면 멈춘다
   });
 
+  test('에러 콜백이 오지 않아도 시간 초과 시 실패로 처리하고 다시 시도한다(Android)', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk, { loadTimeoutMs: 20, retryDelaysMs: [5] });
+    await ad.preload();
+    expect(ad.getStatus()).toBe('loading');
+    await sleep(60); // 아무 이벤트도 오지 않는다
+    expect(ad.getLastError()).toContain('시간 초과');
+    expect(state.loadCalls).toBe(2); // 시간 초과 뒤 자동 재시도
+  });
+
+  test('시간 초과 뒤에 loaded가 늦게 와도 준비된 광고로 쓴다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk, { loadTimeoutMs: 15, retryDelaysMs: [] });
+    await ad.preload();
+    await sleep(40);
+    expect(ad.getStatus()).toBe('failed');
+    state.loadHandlers.onEvent({ type: 'loaded' });
+    expect(ad.getStatus()).toBe('ready');
+  });
+
+  test('시간 초과로 처리된 시도의 늦은 에러 콜백은 재시도를 중복 예약하지 않는다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk, { loadTimeoutMs: 15, retryDelaysMs: [200] });
+    await ad.preload();
+    const firstHandlers = state.loadHandlers;
+    await sleep(40); // 시간 초과로 failed, 재시도는 200ms 뒤
+    firstHandlers.onError(new Error('late no fill'));
+    expect(ad.getLastError()).toBe('late no fill');
+    await sleep(30);
+    expect(state.loadCalls).toBe(1); // 아직 재시도 전, 중복 예약 없음
+  });
+
   test('재시도 중 로드에 성공하면 ready가 되고 재시도 횟수를 초기화한다', async () => {
     const { sdk, state } = makeSdk();
     const ad = make(sdk, { retryDelaysMs: [5] });
