@@ -20,6 +20,7 @@ export const TONE_TEXT = {
 const SIZE = {
   sm: 'w-7 h-7 text-xs sm:w-8 sm:h-8 sm:text-sm',
   md: 'w-10 h-10 text-base sm:w-12 sm:h-12 sm:text-lg',
+  lg: 'w-11 h-11 text-lg sm:w-16 sm:h-16 sm:text-2xl',
 };
 
 const NumberBall = ({ number, size = 'md' }) => (

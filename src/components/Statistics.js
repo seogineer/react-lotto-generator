@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart2, Dices } from 'lucide-react';
+import { BarChart2, ListOrdered } from 'lucide-react';
 import Card from './Card';
 import NumberBall from './NumberBall';
 import AsyncState from './AsyncState';
@@ -20,7 +20,7 @@ const Statistics = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Card title="가장 많이 나온 번호" icon={BarChart2}>
+      <Card title="출현 빈도 분석" icon={BarChart2}>
         <AsyncState loading={frequent.loading} error={frequent.error} hasData={!!frequent.data} onRetry={frequent.retry} rows={5}>
           <div className="grid gap-3">
             {frequent.data?.map(({ number, frequency }) => (
@@ -29,12 +29,12 @@ const Statistics = () => {
                 <div className="flex-1">
                   <div className="h-3 sm:h-4 bg-panel-strong rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-yellow-300 via-amber-500 to-red-600 shadow-glow-gold transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-teal-300 to-teal-600 transition-all duration-500"
                       style={{ width: `${(frequency / maxFrequency) * 100}%` }}
                     />
                   </div>
                 </div>
-                <span className="text-body min-w-[3rem] sm:min-w-[4rem] text-sm sm:text-base">
+                <span className="text-body font-mono tabular-nums min-w-[3rem] sm:min-w-[4rem] text-sm sm:text-base">
                   {frequency}회
                 </span>
               </div>
@@ -43,12 +43,12 @@ const Statistics = () => {
         </AsyncState>
       </Card>
 
-      <Card title="자리별 많이 나온 번호" icon={Dices}>
+      <Card title="자리별 빈도 분석" icon={ListOrdered}>
         <AsyncState loading={position.loading} error={position.error} hasData={!!position.data} onRetry={position.retry} rows={6}>
           <div className="grid gap-3">
             {positionStats.map(({ position: pos, numbers }) => (
               <div key={pos} className="flex items-center gap-3 sm:gap-4 bg-panel border border-line p-3 rounded-xl">
-                <span className="font-bold text-gold min-w-[3.5rem] text-sm sm:text-base">
+                <span className="font-bold text-accent min-w-[3.5rem] text-sm sm:text-base">
                   {pos}번째
                 </span>
                 <div className="flex gap-1.5 sm:gap-2 flex-wrap">

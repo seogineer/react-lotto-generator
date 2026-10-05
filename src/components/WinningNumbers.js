@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trophy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ClipboardList } from 'lucide-react';
 import Card from './Card';
 import NumberBall from './NumberBall';
 import AsyncState from './AsyncState';
@@ -13,7 +13,7 @@ const PageButton = ({ label, onClick, disabled, children }) => (
     onClick={onClick}
     disabled={disabled}
     aria-label={label}
-    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-body hover:bg-gold-soft disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-body hover:bg-accent-soft disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
   >
     {children}
   </button>
@@ -32,7 +32,7 @@ const WinningNumbers = () => {
   };
 
   return (
-    <Card title="당첨 내역" icon={Trophy}>
+    <Card title="회차별 당첨 기록" icon={ClipboardList}>
       <AsyncState loading={loading} error={error} hasData={!!data} onRetry={retry} rows={4}>
         <div className={`grid gap-3 transition-opacity ${loading ? 'opacity-60' : ''}`}>
           {data?.content.map(({ round, date, one, two, three, four, five, six, bonus, firstWinners, firstWinPrize }) => (
@@ -50,11 +50,11 @@ const WinningNumbers = () => {
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 text-sm text-body">
                 <div className="flex items-center gap-2">
-                  <span className="text-gold font-medium">1등 상금:</span>
+                  <span className="text-accent font-medium">1등 상금:</span>
                   <span>{firstWinPrize.toLocaleString()}원</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gold font-medium">당첨자 수:</span>
+                  <span className="text-accent font-medium">당첨자 수:</span>
                   <span>{firstWinners}명</span>
                 </div>
               </div>

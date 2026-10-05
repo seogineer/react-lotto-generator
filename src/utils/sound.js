@@ -23,6 +23,7 @@ const beep = (frequency, duration, type, volume, delay = 0) => {
   oscillator.stop(start + duration);
 };
 
-export const playTick = () => beep(500 + Math.random() * 400, 0.04, 'square', 0.03);
-export const playStop = () => beep(200, 0.14, 'triangle', 0.1);
-export const playWin = () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.18, 'sine', 0.07, i * 0.1));
+// 분석 중에는 짧은 틱, 한 칸이 확정될 때는 낮은 톤, 모두 끝나면 부드러운 두 음의 완료음
+export const playTick = () => beep(700 + Math.random() * 200, 0.03, 'sine', 0.025);
+export const playStop = () => beep(330, 0.1, 'sine', 0.06);
+export const playDone = () => [523, 659].forEach((f, i) => beep(f, 0.16, 'sine', 0.05, i * 0.12));

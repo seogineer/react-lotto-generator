@@ -38,7 +38,7 @@ const NumberPicker = ({ fixed, excluded, onChange, disabled, error }) => {
             </p>
           ) : (
             <p className="text-sm text-muted mb-3">
-              번호를 누를 때마다 <span className="text-gold-strong">고정</span> → <span className="line-through">제외</span> → 해제 순으로 바뀌어요. (고정은 최대 {MAX_FIXED}개)
+              번호를 누를 때마다 <span className="text-accent-strong">고정</span> → <span className="line-through">제외</span> → 해제 순으로 바뀌어요. (고정은 최대 {MAX_FIXED}개)
             </p>
           )}
           <div className="grid grid-cols-7 sm:grid-cols-9 gap-1.5">
@@ -51,7 +51,7 @@ const NumberPicker = ({ fixed, excluded, onChange, disabled, error }) => {
                   disabled={disabled}
                   aria-label={`${n}${state === 'fixed' ? ' 고정됨' : state === 'excluded' ? ' 제외됨' : ''}`}
                   className={`min-h-[40px] rounded-lg text-sm font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-40 ${state === 'fixed'
-                    ? 'bg-gradient-to-b from-yellow-200 to-amber-500 text-slate-900 border-transparent'
+                    ? 'bg-brand text-on-brand border-transparent'
                     : state === 'excluded'
                       ? 'bg-panel-strong text-faint line-through border-line-soft'
                       : 'bg-panel text-body border-line-soft hover:border-line-strong'
@@ -65,7 +65,7 @@ const NumberPicker = ({ fixed, excluded, onChange, disabled, error }) => {
           {!disabled && (fixed.length > 0 || excluded.length > 0) && (
             <button
               onClick={() => onChange({ fixed: [], excluded: [] })}
-              className="mt-3 text-sm text-gold-strong underline min-h-[44px]"
+              className="mt-3 text-sm text-accent-strong underline min-h-[44px]"
             >
               모두 해제
             </button>

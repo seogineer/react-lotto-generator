@@ -2,61 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 라이트가 기본이고, 시스템이 다크 모드일 때만 기존 어두운 테마를 쓴다. */
+/* 라이트가 기본이고, 시스템이 다크 모드일 때만 어두운 테마를 쓴다. */
 :root {
   color-scheme: light dark;
-  --c-page: #f2f8f4;
-  --c-glow: rgba(16, 185, 129, 0.18);
+  --c-page: #f3f7f8;
+  --c-glow: rgba(20, 184, 166, 0.12);
+  --c-grid: rgba(15, 118, 110, 0.06);
   --c-surface: #ffffff;
-  --c-panel: #f1f7f3;
-  --c-panel-soft: #f8fbf9;
-  --c-panel-strong: #e2eee7;
-  --c-heading: #0b2417;
-  --c-body: #1e3d2d;
-  --c-muted: #4a6859;
-  --c-faint: #6b8576;
-  --c-gold: #b45309;
-  --c-gold-strong: #92400e;
-  --c-gold-soft: rgba(180, 83, 9, 0.08);
-  --c-line: rgba(180, 83, 9, 0.28);
-  --c-line-soft: rgba(180, 83, 9, 0.16);
-  --c-line-strong: rgba(180, 83, 9, 0.55);
-  --c-focus: #d97706;
+  --c-panel: #f0f6f6;
+  --c-panel-soft: #f8fbfb;
+  --c-panel-strong: #e0ecec;
+  --c-heading: #0b2220;
+  --c-body: #1f3836;
+  --c-muted: #486260;
+  --c-faint: #6a8584;
+  --c-brand: #0f766e;
+  --c-on-brand: #ffffff;
+  --c-accent: #0f766e;
+  --c-accent-strong: #115e59;
+  --c-accent-soft: rgba(15, 118, 110, 0.08);
+  --c-line: rgba(15, 118, 110, 0.2);
+  --c-line-soft: rgba(15, 118, 110, 0.12);
+  --c-line-strong: rgba(15, 118, 110, 0.4);
+  --c-focus: #0d9488;
   --c-danger: #be123c;
-  --c-card-shadow: 0 1px 2px rgba(15, 60, 40, 0.08), 0 10px 28px rgba(16, 185, 129, 0.1);
-  --c-bulb: #f59e0b;
-  --c-bulb-glow: #d97706;
+  --c-card-shadow: 0 1px 2px rgba(12, 60, 56, 0.06), 0 8px 24px rgba(12, 60, 56, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --c-page: #03100a;
-    --c-glow: rgba(16, 185, 129, 0.28);
-    --c-surface: rgba(2, 44, 34, 0.8);
-    --c-panel: rgba(0, 0, 0, 0.3);
-    --c-panel-soft: rgba(0, 0, 0, 0.2);
-    --c-panel-strong: rgba(0, 0, 0, 0.45);
+    --c-page: #0a1416;
+    --c-glow: rgba(45, 212, 191, 0.12);
+    --c-grid: rgba(94, 234, 212, 0.05);
+    --c-surface: rgba(15, 31, 33, 0.9);
+    --c-panel: rgba(0, 0, 0, 0.28);
+    --c-panel-soft: rgba(0, 0, 0, 0.18);
+    --c-panel-strong: rgba(0, 0, 0, 0.4);
     --c-heading: #ffffff;
-    --c-body: #d1fae5;
-    --c-muted: rgba(167, 243, 208, 0.7);
-    --c-faint: rgba(209, 250, 229, 0.4);
-    --c-gold: #fbbf24;
-    --c-gold-strong: #fcd34d;
-    --c-gold-soft: rgba(251, 191, 36, 0.1);
-    --c-line: rgba(245, 158, 11, 0.3);
-    --c-line-soft: rgba(245, 158, 11, 0.2);
-    --c-line-strong: rgba(251, 191, 36, 0.6);
-    --c-focus: #fcd34d;
+    --c-body: #d3e6e4;
+    --c-muted: rgba(180, 220, 216, 0.72);
+    --c-faint: rgba(211, 230, 228, 0.42);
+    --c-brand: #2dd4bf;
+    --c-on-brand: #042f2e;
+    --c-accent: #5eead4;
+    --c-accent-strong: #99f6e4;
+    --c-accent-soft: rgba(94, 234, 212, 0.1);
+    --c-line: rgba(94, 234, 212, 0.2);
+    --c-line-soft: rgba(94, 234, 212, 0.12);
+    --c-line-strong: rgba(94, 234, 212, 0.42);
+    --c-focus: #5eead4;
     --c-danger: #fda4af;
-    --c-card-shadow: 0 0 28px rgba(16, 185, 129, 0.18), inset 0 0 40px rgba(0, 0, 0, 0.35);
-    --c-bulb: #fde68a;
-    --c-bulb-glow: #fbbf24;
+    --c-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 }
 
+/* 연구 노트의 모눈종이 같은 배경 */
 .app-bg {
   background-color: var(--c-page);
-  background-image: radial-gradient(ellipse at top, var(--c-glow), transparent 60%);
+  background-image:
+    linear-gradient(var(--c-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-grid) 1px, transparent 1px),
+    radial-gradient(ellipse at top, var(--c-glow), transparent 60%);
+  background-size: 28px 28px, 28px 28px, auto;
 }
 
 body {
@@ -80,29 +87,8 @@ code {
     radial-gradient(circle at 70% 80%, rgba(0, 0, 0, 0.3), transparent 50%);
 }
 
-.bulbs {
-  height: 10px;
-  background-image: radial-gradient(circle, var(--c-bulb) 2px, transparent 3px);
-  background-size: 22px 10px;
-  background-repeat: repeat-x;
-  background-position: center;
-  filter: drop-shadow(0 0 3px var(--c-bulb-glow));
-  animation: bulb-blink 1.4s steps(1) infinite;
-}
-
-.bulbs-alt {
-  animation-delay: 0.7s;
-}
-
-@keyframes bulb-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .bulbs,
-  .animate-ball-in,
-  .animate-reel-stop {
+  .animate-ball-in {
     animation: none;
   }
 }

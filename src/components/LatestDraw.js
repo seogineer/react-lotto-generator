@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 import Card from './Card';
 import NumberBall from './NumberBall';
 import AsyncState from './AsyncState';
@@ -12,7 +12,7 @@ const LatestDraw = () => {
   const draw = data?.content?.[0];
 
   return (
-    <Card title={draw ? `최신 당첨 번호 · ${draw.round}회` : '최신 당첨 번호'} icon={Trophy}>
+    <Card title={draw ? `최신 당첨 번호 · ${draw.round}회` : '최신 당첨 번호'} icon={ClipboardList}>
       <AsyncState loading={loading} error={error} hasData={!!draw} onRetry={retry} rows={1}>
         {draw && (() => {
           const { date, one, two, three, four, five, six, bonus, firstWinPrize, firstWinners } = draw;
@@ -28,7 +28,7 @@ const LatestDraw = () => {
               </div>
               <div className="text-sm text-body space-y-1">
                 <p className="text-muted">{year}년 {month}월 {day}일 추첨</p>
-                <p><span className="text-gold font-medium">1등 상금</span> {firstWinPrize.toLocaleString()}원 · <span className="text-gold font-medium">당첨자</span> {firstWinners}명</p>
+                <p><span className="text-accent font-medium">1등 상금</span> {firstWinPrize.toLocaleString()}원 · <span className="text-accent font-medium">당첨자</span> {firstWinners}명</p>
               </div>
             </div>
           );

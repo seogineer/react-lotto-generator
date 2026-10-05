@@ -7,7 +7,7 @@ const IconButton = ({ label, onClick, children }) => (
   <button
     onClick={onClick}
     aria-label={label}
-    className="inline-flex items-center justify-center gap-1.5 min-w-[44px] min-h-[44px] px-2 rounded-lg text-sm text-gold-strong hover:bg-gold-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+    className="inline-flex items-center justify-center gap-1.5 min-w-[44px] min-h-[44px] px-2 rounded-lg text-sm text-accent-strong hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
   >
     {children}
   </button>
@@ -34,7 +34,7 @@ const Ticket = ({ title, sets, onCopy, onShare, canShare }) => (
       {sets.map((set, i) => (
         <li key={i} className="flex items-center gap-2 sm:gap-3">
           {sets.length > 1 && (
-            <span className="w-5 font-display font-bold text-gold">{gameLabel(i)}</span>
+            <span className="w-5 font-display font-bold text-accent">{gameLabel(i)}</span>
           )}
           <div className="flex gap-1.5 sm:gap-2 flex-1 flex-wrap">
             {set.map((n) => (

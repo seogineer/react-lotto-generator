@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { BarChart2, Dices, Volume2, VolumeX, Trash2 } from 'lucide-react';
+import { BarChart2, FlaskConical, Shuffle, Volume2, VolumeX, Trash2 } from 'lucide-react';
 import Card from './Card';
 import ToggleButton from './ToggleButton';
-import SlotMachine from './SlotMachine';
+import NumberBoard from './NumberBoard';
 import NumberPicker from './NumberPicker';
 import Ticket from './Ticket';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { playStop, playWin } from '../utils/sound';
+import { playDone, playStop } from '../utils/sound';
 import {
   PICK_COUNT,
   MAX_GAMES,
@@ -22,7 +22,7 @@ const MAX_HISTORY = 10;
 const REEL_STOP_INTERVAL = 350;
 const MIN_SPIN_TIME = 900;
 const MODE_HELP = {
-  recommend: '역대 당첨 통계에 기반해 서버가 번호를 제안해요.',
+  recommend: '역대 당첨 통계를 분석해 서버가 번호를 제안해요.',
   random: '1~45 중에서 무작위로 뽑아요. 번호 고정/제외도 쓸 수 있어요.',
 };
 
@@ -62,7 +62,7 @@ const Generator = () => {
     setCurrent(entry);
     setHistory((prev) => [entry, ...prev].slice(0, MAX_HISTORY));
     setAnnounce(`생성된 번호. ${formatTicket(sets)}`);
-    if (soundOn) playWin();
+    if (soundOn) playDone();
   }, [setHistory, soundOn]);
 
   const handleSpin = useCallback(() => {
@@ -132,23 +132,22 @@ const Generator = () => {
 
   return (
     <Card className="text-center relative overflow-hidden">
-      <div className="bulbs absolute top-0 inset-x-0" aria-hidden="true" />
-      <div className="bulbs bulbs-alt absolute bottom-0 inset-x-0" aria-hidden="true" />
-
       <button
         onClick={() => setSoundOn(!soundOn)}
         aria-pressed={soundOn}
         aria-label={soundOn ? '효과음 끄기' : '효과음 켜기'}
-        className="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gold-strong hover:bg-gold-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        className="absolute top-3 right-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-accent-strong hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         {soundOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
       </button>
 
-      <div className="text-gold opacity-80 tracking-[0.5em] text-sm mb-1" aria-hidden="true">♠ ♥ ♦ ♣</div>
-      <h1 className="font-display text-3xl sm:text-5xl font-black mb-1 bg-gradient-to-r from-amber-600 via-amber-700 to-yellow-800 dark:from-yellow-100 dark:via-amber-400 dark:to-yellow-600 bg-clip-text text-transparent">
+      <div className="flex justify-center mb-2 text-accent" aria-hidden="true">
+        <FlaskConical className="w-8 h-8 sm:w-10 sm:h-10" />
+      </div>
+      <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 text-heading">
         {process.env.REACT_APP_BRAND_NAME || '로또 번호 생성기'}
       </h1>
-      <p className="text-muted text-sm sm:text-base mb-5">SPIN &amp; WIN · 이번 주의 행운 번호</p>
+      <p className="text-muted text-sm sm:text-base mb-5">역대 당첨 데이터를 분석해 번호를 만들어 드려요</p>
 
       <div className="flex justify-center flex-wrap gap-x-3 gap-y-2 mb-2">
         <div className="flex gap-2">
@@ -157,7 +156,7 @@ const Generator = () => {
             추천
           </ToggleButton>
           <ToggleButton active={mode === 'random'} onClick={() => setMode('random')}>
-            <Dices className="w-4 h-4" aria-hidden="true" />
+            <Shuffle className="w-4 h-4" aria-hidden="true" />
             랜덤
           </ToggleButton>
         </div>
@@ -177,12 +176,12 @@ const Generator = () => {
         error={optionsError}
       />
 
-      <SlotMachine values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} soundOn={soundOn} />
+      <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} soundOn={soundOn} />
 
       {current && (
         <div className="mt-6 max-w-xl mx-auto">
           <Ticket
-            title={games > 1 || current.sets.length > 1 ? '이번 티켓' : '이번 번호'}
+            title="이번 결과"
             sets={current.sets}
             onCopy={copySets}
             onShare={shareSets}
@@ -194,7 +193,7 @@ const Generator = () => {
       {pastHistory.length > 0 && (
         <div className="mt-8 pt-6 border-t border-line max-w-xl mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-muted">최근 기록</h3>
+            <h3 className="text-sm font-medium text-muted">최근 생성 기록</h3>
             <button
               onClick={() => { setHistory([]); setCurrent(null); }}
               className="inline-flex items-center gap-1 min-h-[44px] px-2 text-sm text-muted hover:text-heading focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded"
@@ -220,7 +219,7 @@ const Generator = () => {
 
       <p className="sr-only" aria-live="polite">{announce}</p>
       {toast && (
-        <div role="status" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-black/90 border border-amber-400/60 text-amber-100 text-sm shadow-glow-gold">
+        <div role="status" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/95 border border-white/10 text-white text-sm shadow-lg">
           {toast}
         </div>
       )}
