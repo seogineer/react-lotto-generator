@@ -8,7 +8,7 @@ export const useFetch = (url) => {
   useEffect(() => {
     let cancelled = false;
     setState((prev) => ({ ...prev, loading: true, error: null }));
-    axios.get(url)
+    axios.get(url, { timeout: 8000 })
       .then((response) => {
         if (!cancelled) setState({ data: response.data, loading: false, error: null });
       })

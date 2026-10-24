@@ -7,6 +7,7 @@ import NumberBoard from './NumberBoard';
 import NumberPicker from './NumberPicker';
 import Ticket from './Ticket';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { logClick, logEvent, logImpression, logScreen } from '../utils/analytics';
 import { AD_DEBUG, FREE_GENERATIONS, adController } from '../utils/ads';
 import {
   PICK_COUNT,
@@ -27,8 +28,12 @@ const MODE_HELP = {
 };
 
 const fetchRecommendSet = async () => {
-  const { data } = await axios.get(`${LOTTO_API_URL}/drawings/generate`);
-  return sortNumbers([data.one, data.two, data.three, data.four, data.five, data.six]);
+  const { data } = await axios.get(`${LOTTO_API_URL}/drawings/generate`, { timeout: 5000 });
+  const numbers = [data?.one, data?.two, data?.three, data?.four, data?.five, data?.six];
+  const valid = numbers.every((n) => Number.isInteger(n) && n >= 1 && n <= 45)
+    && new Set(numbers).size === PICK_COUNT;
+  if (!valid) throw new Error('추천 응답 형식이 올바르지 않아요');
+  return sortNumbers(numbers);
 };
 
 const Generator = () => {
@@ -43,7 +48,9 @@ const Generator = () => {
   const [toast, setToast] = useState('');
   const [announce, setAnnounce] = useState('');
   const [adBusy, setAdBusy] = useState(false);
+  const [fallbackNotice, setFallbackNotice] = useState(false);
   const toastTimer = useRef(null);
+  const reelTimers = useRef([]);
 
   const isGenerating = spinning.some(Boolean);
   const optionsError = mode === 'random' ? validateOptions(options) : null;
@@ -60,7 +67,7 @@ const Generator = () => {
       ? `처음 ${FREE_GENERATIONS}회는 광고 없이 만들 수 있고, 이후에는 광고를 끝까지 보면 돼요`
       : adWillShow
         ? '광고를 끝까지 보면 번호를 만들 수 있어요'
-        : '지금은 광고를 불러올 수 없어 바로 만들어 드려요';
+        : '광고 없이 바로 번호를 만들 수 있어요';
   const adDebug = AD_DEBUG && adEnabled
     ? `광고 상태: ${adStatus}${adController.getLastError() ? ` / ${adController.getLastError()}` : ''}`
     : '';
@@ -72,36 +79,57 @@ const Generator = () => {
   }, []);
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
+  useEffect(() => () => {
+    reelTimers.current.forEach(clearTimeout);
+    reelTimers.current = [];
+  }, []);
 
   // 광고는 미리 로드해 둔다(로드 -> 표시 순서가 필수).
   useEffect(() => { adController.preload(); }, []);
+
+  // 화면 진입 로그
+  useEffect(() => { logScreen('home'); }, []);
 
   const finish = useCallback((sets) => {
     const entry = { id: Date.now(), sets };
     setCurrent(entry);
     setHistory((prev) => [entry, ...prev].slice(0, MAX_HISTORY));
     setUsedCount((count) => count + 1); // 생성이 끝났을 때만 무료 횟수를 소모한다
-    setAnnounce(`생성된 번호. ${formatTicket(sets)}`);
-  }, [setHistory]);
+    setAnnounce(`번호를 만들었어요. ${formatTicket(sets)}`);
+    logEvent('generate_done', { mode });
+  }, [setHistory, mode]);
 
   const startGeneration = useCallback(() => {
     setCurrent(null);
     setAnnounce('');
+    setFallbackNotice(false);
     setSpinning(Array(PICK_COUNT).fill(true));
 
     const make = mode === 'random'
       ? async () => generateRandomSets(1, options)
-      : () => Promise.all([fetchRecommendSet()]);
-    const minSpin = new Promise((resolve) => setTimeout(resolve, MIN_SPIN_TIME));
+      : async () => {
+        // 추천 서버가 응답하지 않으면 랜덤으로 대체해 항상 결과를 보여 준다.
+        try {
+          return [await fetchRecommendSet()];
+        } catch (error) {
+          console.error('추천 요청 실패, 랜덤으로 대체:', error);
+          setFallbackNotice(true);
+          return generateRandomSets(1);
+        }
+      };
+    const minSpin = new Promise((resolve) => {
+      reelTimers.current.push(setTimeout(resolve, MIN_SPIN_TIME));
+    });
 
     Promise.all([make(), minSpin]).then(([sets]) => {
       setReelValues(sets[0]);
       setRunId((id) => id + 1);
       sets[0].forEach((_, index) => {
-        setTimeout(() => {
+        const id = setTimeout(() => {
           setSpinning((prev) => prev.map((s, i) => (i === index ? false : s)));
           if (index === sets[0].length - 1) finish(sets);
         }, index * REEL_STOP_INTERVAL);
+        reelTimers.current.push(id);
       });
     }).catch((error) => {
       console.error('데이터 요청 실패:', error);
@@ -118,17 +146,24 @@ const Generator = () => {
       showToast(optionsError);
       return;
     }
+    logClick('generate', { mode, ad: adRequired });
     if (!adRequired) {
       startGeneration();
       return;
     }
     setAdBusy(true);
+    logImpression('reward_ad', { mode });
     adController.run().then((proceed) => {
       setAdBusy(false);
-      if (proceed) startGeneration();
-      else showToast('광고를 끝까지 보면 번호를 만들 수 있어요');
-    });
-  }, [isGenerating, adBusy, adRequired, optionsError, showToast, startGeneration]);
+      if (proceed) {
+        logEvent('ad_completed', { mode });
+        startGeneration();
+      } else {
+        logEvent('ad_dismissed', { mode });
+        showToast('광고를 끝까지 보면 번호를 만들 수 있어요');
+      }
+    }).catch(() => setAdBusy(false));
+  }, [isGenerating, adBusy, adRequired, optionsError, mode, showToast, startGeneration]);
 
   // 키보드 단축키는 항상 최신 handleSpin을 호출한다.
   const spinRef = useRef(handleSpin);
@@ -148,6 +183,7 @@ const Generator = () => {
     try {
       await navigator.clipboard.writeText(formatTicket(sets));
       showToast('복사했어요');
+      logClick('copy', { mode });
     } catch {
       showToast('복사에 실패했어요');
     }
@@ -169,9 +205,9 @@ const Generator = () => {
         <FlaskConical className="w-8 h-8 sm:w-10 sm:h-10" />
       </div>
       <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mb-2 text-heading">
-        {process.env.REACT_APP_BRAND_NAME || '로또 번호 생성기'}
+        {process.env.REACT_APP_BRAND_NAME || '로또 번호 연구소'}
       </h1>
-      <p className="text-muted text-sm sm:text-base mb-5">역대 회차 데이터를 분석해 번호를 만들어 드려요</p>
+      <p className="text-muted text-sm sm:text-base mb-5">추천 또는 랜덤으로 번호를 만들어 드려요</p>
 
       <div className="flex justify-center flex-wrap gap-x-3 gap-y-2 mb-2">
         <div className="flex gap-2">
@@ -197,8 +233,18 @@ const Generator = () => {
 
       <NumberBoard values={reelValues} spinning={spinning} runId={runId} onSpin={handleSpin} busy={adBusy} adRequired={adWillShow} adNotice={adNotice} adDebug={adDebug} />
 
+      {!current && !isGenerating && (
+        <p className="mt-4 text-sm text-muted">버튼을 누르면 6개 번호가 만들어져요</p>
+      )}
+
       {current && (
         <div className="mt-6 max-w-xl mx-auto">
+          <p className="mb-3 text-sm font-medium text-accent-strong" role="status">
+            번호를 만들었어요. 복사해서 저장해 보세요
+          </p>
+          {fallbackNotice && (
+            <p className="mb-3 text-xs text-muted">추천 서버 응답이 없어 랜덤으로 만들었어요</p>
+          )}
           <Ticket
             title="이번 결과"
             sets={current.sets}

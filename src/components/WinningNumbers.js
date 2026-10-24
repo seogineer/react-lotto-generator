@@ -7,6 +7,11 @@ import { useFetch } from '../hooks/useFetch';
 
 const LOTTO_API_URL = process.env.REACT_APP_LOTTO_API_URL;
 const ITEMS_PER_PAGE = 5;
+const isNumeric = (v) =>
+  (typeof v === 'number' && Number.isFinite(v)) ||
+  (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)));
+const fmtNum = (v) => (isNumeric(v) ? Number(v).toLocaleString() : '-');
+const dateParts = (d) => (typeof d === 'string' ? d.split('-') : ['-', '-', '-']);
 
 const PageButton = ({ label, onClick, disabled, children }) => (
   <button
@@ -23,6 +28,7 @@ const WinningNumbers = () => {
   const [page, setPage] = useState(1);
   const [pageInput, setPageInput] = useState('1');
   const { data, loading, error, retry } = useFetch(`${LOTTO_API_URL}/drawings?page=${page - 1}&size=${ITEMS_PER_PAGE}`);
+  const items = Array.isArray(data?.content) ? data.content : [];
   const totalPages = data?.totalPages ?? 0;
 
   const goTo = (target) => {
@@ -33,13 +39,13 @@ const WinningNumbers = () => {
 
   return (
     <Card title="회차별 기록" icon={ClipboardList}>
-      <AsyncState loading={loading} error={error} hasData={!!data} onRetry={retry} rows={4}>
+      <AsyncState loading={loading} error={error} hasData={items.length > 0} onRetry={retry} rows={4}>
         <div className={`grid gap-3 transition-opacity ${loading ? 'opacity-60' : ''}`}>
-          {data?.content.map(({ round, date, one, two, three, four, five, six, bonus, firstWinners, firstWinPrize }) => (
+          {items.map(({ round, date, one, two, three, four, five, six, bonus, firstWinners, firstWinPrize }) => (
             <div key={round} className="bg-panel border border-line p-3 sm:p-4 rounded-xl">
               <div className="flex items-center justify-between mb-3 text-sm sm:text-base">
                 <span className="font-bold text-heading">{round}회</span>
-                <span className="text-muted">{date.split('-')[0]}년 {date.split('-')[1]}월 {date.split('-')[2]}일 회차</span>
+                <span className="text-muted">{dateParts(date)[0]}년 {dateParts(date)[1]}월 {dateParts(date)[2]}일 회차</span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2.5 mb-3">
                 {[one, two, three, four, five, six].map((n, i) => (
@@ -51,11 +57,11 @@ const WinningNumbers = () => {
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 text-sm text-body">
                 <div className="flex items-center gap-2">
                   <span className="text-accent font-medium">1등 지급액:</span>
-                  <span>{firstWinPrize.toLocaleString()}원</span>
+                  <span>{fmtNum(firstWinPrize)}원</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-accent font-medium">1등 인원:</span>
-                  <span>{firstWinners}명</span>
+                  <span>{isNumeric(firstWinners) ? firstWinners : '-'}명</span>
                 </div>
               </div>
             </div>

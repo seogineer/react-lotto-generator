@@ -22,12 +22,18 @@ export const ErrorMessage = ({ onRetry }) => (
   </div>
 );
 
+export const EmptyMessage = () => (
+  <div className="text-center py-6">
+    <p className="text-muted">아직 표시할 회차가 없어요</p>
+  </div>
+);
+
 // 데이터가 이미 있으면 재요청 중에도 기존 내용을 유지한다.
 const AsyncState = ({ loading, error, hasData, onRetry, rows, children }) => {
   if (hasData) return children;
   if (error) return <ErrorMessage onRetry={onRetry} />;
   if (loading) return <Skeleton rows={rows} />;
-  return null;
+  return <EmptyMessage />;
 };
 
 export default AsyncState;

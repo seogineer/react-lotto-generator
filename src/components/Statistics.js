@@ -12,18 +12,20 @@ const Statistics = () => {
   const frequent = useFetch(`${LOTTO_API_URL}/drawings/frequent`);
   const position = useFetch(`${LOTTO_API_URL}/drawings/position/frequent`);
 
-  const maxFrequency = Math.max(1, ...(frequent.data ?? []).map(({ frequency }) => frequency));
+  const frequentList = Array.isArray(frequent.data) ? frequent.data : [];
+  const positionList = Array.isArray(position.data) ? position.data : [];
+  const maxFrequency = Math.max(1, ...frequentList.map(({ frequency }) => frequency));
   const positionStats = Array.from({ length: PICK_COUNT }, (_, i) => ({
     position: i + 1,
-    numbers: (position.data ?? []).filter((item) => item.position === i + 1).map((item) => item.number),
+    numbers: positionList.filter((item) => item.position === i + 1).map((item) => item.number),
   }));
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <Card title="출현 빈도 분석" icon={BarChart2}>
-        <AsyncState loading={frequent.loading} error={frequent.error} hasData={!!frequent.data} onRetry={frequent.retry} rows={5}>
+        <AsyncState loading={frequent.loading} error={frequent.error} hasData={frequentList.length > 0} onRetry={frequent.retry} rows={5}>
           <div className="grid gap-3">
-            {frequent.data?.map(({ number, frequency }) => (
+            {frequentList.map(({ number, frequency }) => (
               <div key={number} className="flex items-center gap-3 sm:gap-4">
                 <NumberBall number={number} size="sm" />
                 <div className="flex-1">
@@ -44,7 +46,7 @@ const Statistics = () => {
       </Card>
 
       <Card title="자리별 빈도 분석" icon={ListOrdered}>
-        <AsyncState loading={position.loading} error={position.error} hasData={!!position.data} onRetry={position.retry} rows={6}>
+        <AsyncState loading={position.loading} error={position.error} hasData={positionList.length > 0} onRetry={position.retry} rows={6}>
           <div className="grid gap-3">
             {positionStats.map(({ position: pos, numbers }) => (
               <div key={pos} className="flex items-center gap-3 sm:gap-4 bg-panel border border-line p-3 rounded-xl">
