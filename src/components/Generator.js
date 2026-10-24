@@ -55,16 +55,18 @@ const Generator = () => {
   const isGenerating = spinning.some(Boolean);
   const optionsError = mode === 'random' ? validateOptions(options) : null;
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
-  // 광고 그룹이 설정된 빌드에서만, 처음 FREE_GENERATIONS회 이후의 번호 생성에 보상형 광고를 요구한다.
+  // 광고 그룹이 설정된 빌드에서만, 추천 모드에서 처음 FREE_GENERATIONS회 이후 보상형 광고를 요구한다(랜덤은 항상 무료).
   const adEnabled = adController.isEnabled();
-  const adRequired = adEnabled && requiresAd({ usedCount, freeCount: FREE_GENERATIONS });
+  const adRequired = adEnabled && requiresAd({ usedCount, freeCount: FREE_GENERATIONS, mode });
   // 광고가 실제로 나올 수 있는 상태(준비 중이거나 준비됨)일 때만 '광고 보고' 문구를 보여 준다.
   const adStatus = useSyncExternalStore(adController.subscribe, adController.getStatus);
   const adWillShow = adRequired && (adStatus === 'ready' || adStatus === 'loading');
   const adNotice = !adEnabled
     ? ''
-    : !adRequired
-      ? `처음 ${FREE_GENERATIONS}회는 광고 없이 만들 수 있고, 이후에는 광고를 끝까지 보면 돼요`
+    : mode === 'random'
+      ? '랜덤 번호는 언제나 무료예요'
+      : !adRequired
+      ? `추천 번호는 처음 ${FREE_GENERATIONS}회 무료, 이후 광고를 보면 만들 수 있어요`
       : adWillShow
         ? '광고를 끝까지 보면 번호를 만들 수 있어요'
         : '광고 없이 바로 번호를 만들 수 있어요';
@@ -85,7 +87,9 @@ const Generator = () => {
   }, []);
 
   // 광고는 미리 로드해 둔다(로드 -> 표시 순서가 필수).
-  useEffect(() => { adController.preload(); }, []);
+  // 추천 모드에서는 무료 구간에도 미리 로드해 두고, 랜덤 모드에서는 로드하지 않는다.
+  const shouldPreload = adEnabled && mode === 'recommend';
+  useEffect(() => { if (shouldPreload) adController.preload(); }, [shouldPreload]);
 
   // 화면 진입 로그
   useEffect(() => { logScreen('home'); }, []);
@@ -94,7 +98,7 @@ const Generator = () => {
     const entry = { id: Date.now(), sets };
     setCurrent(entry);
     setHistory((prev) => [entry, ...prev].slice(0, MAX_HISTORY));
-    setUsedCount((count) => count + 1); // 생성이 끝났을 때만 무료 횟수를 소모한다
+    if (mode === 'recommend') setUsedCount((count) => count + 1); // 추천 생성이 끝났을 때만 무료 횟수를 소모한다
     setAnnounce(`번호를 만들었어요. ${formatTicket(sets)}`);
     logEvent('generate_done', { mode });
   }, [setHistory, mode]);
@@ -152,14 +156,16 @@ const Generator = () => {
       return;
     }
     setAdBusy(true);
-    logImpression('reward_ad', { mode });
-    adController.run().then((proceed) => {
+    let shown = false;
+    adController.run({
+      onShown: () => { shown = true; logImpression('reward_ad', { mode }); },
+    }).then((proceed) => {
       setAdBusy(false);
       if (proceed) {
-        logEvent('ad_completed', { mode });
+        if (shown) logEvent('ad_completed', { mode });
         startGeneration();
       } else {
-        logEvent('ad_dismissed', { mode });
+        if (shown) logEvent('ad_dismissed', { mode });
         showToast('광고를 끝까지 보면 번호를 만들 수 있어요');
       }
     }).catch(() => setAdBusy(false));

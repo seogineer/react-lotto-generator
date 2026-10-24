@@ -1,4 +1,5 @@
 import {
+  requiresAd,
   MAX_FIXED,
   getBallTone,
   sortNumbers,
@@ -107,5 +108,15 @@ describe('formatTicket / gameLabel', () => {
     expect(formatTicket([[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]])).toBe(
       'A  1, 2, 3, 4, 5, 6\nB  7, 8, 9, 10, 11, 12'
     );
+  });
+});
+
+describe('requiresAd 모드 반영', () => {
+  test('랜덤 모드는 사용 횟수와 무관하게 항상 false', () => {
+    expect(requiresAd({ usedCount: 5, freeCount: 1, mode: 'random' })).toBe(false);
+  });
+  test('추천 모드는 무료 횟수 이후 true', () => {
+    expect(requiresAd({ usedCount: 0, freeCount: 1, mode: 'recommend' })).toBe(false);
+    expect(requiresAd({ usedCount: 1, freeCount: 1, mode: 'recommend' })).toBe(true);
   });
 });

@@ -10,12 +10,16 @@ jest.mock('../utils/ads', () => ({
   FREE_GENERATIONS: 1,
   adController: {
     isEnabled: () => true,
-    preload: () => {},
+    preload: jest.fn(),
     getStatus: () => 'ready',
     getLastError: () => '',
     subscribe: () => () => {},
     run: jest.fn(() => Promise.resolve(true)),
   },
+}));
+
+jest.mock('../utils/analytics', () => ({
+  logClick: jest.fn(), logEvent: jest.fn(), logImpression: jest.fn(), logScreen: jest.fn(),
 }));
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
@@ -123,5 +127,108 @@ describe('Generator', () => {
     await advance(5000);
     expect(text()).toContain('번호를 만들었어요');
     expect(spinButton().textContent).toContain('광고 보고 번호 생성하기');
+  });
+
+  describe('광고 구조(랜덤 무료, 추천만 광고)', () => {
+    const REC = { data: { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 } };
+    const modeButton = (label) => [...container.querySelectorAll('button')].find((b) => b.textContent.trim() === label);
+    const switchTo = async (label) => { await act(async () => { modeButton(label).click(); }); };
+    const generate = async () => { await click(); await advance(5000); };
+
+    beforeEach(() => {
+      require('../utils/ads').adController.run.mockReset().mockImplementation(() => Promise.resolve(true));
+      const a = require('../utils/analytics');
+      a.logImpression.mockClear();
+      a.logEvent.mockClear();
+      require('../utils/ads').adController.preload.mockClear();
+    });
+
+    test('랜덤은 광고 없이 연속으로 생성하고 버튼 문구가 바뀌지 않는다', async () => {
+      const { adController } = require('../utils/ads');
+      await render();
+      await switchTo('랜덤');
+      for (let i = 0; i < 3; i += 1) {
+        expect(spinButton().textContent).not.toContain('광고 보고');
+        await generate();
+        expect(text()).toContain('번호를 만들었어요');
+      }
+      expect(adController.run).not.toHaveBeenCalled();
+    });
+
+    test('랜덤 생성은 추천의 무료 횟수를 소모하지 않는다', async () => {
+      const { adController } = require('../utils/ads');
+      axios.get.mockResolvedValue(REC);
+      await render();
+      await switchTo('랜덤');
+      await generate();
+      await generate();
+      await switchTo('추천');
+      expect(spinButton().textContent).not.toContain('광고 보고');
+      await click();
+      expect(adController.run).not.toHaveBeenCalled();
+    });
+
+    test('추천은 1회 무료 후 광고를 요구하고 모드 전환 시 버튼 문구가 즉시 바뀐다', async () => {
+      const { adController } = require('../utils/ads');
+      axios.get.mockResolvedValue(REC);
+      await render();
+      await generate();
+      expect(spinButton().textContent).toContain('광고 보고 번호 생성하기');
+      await switchTo('랜덤');
+      expect(spinButton().textContent).not.toContain('광고 보고');
+      await switchTo('추천');
+      expect(spinButton().textContent).toContain('광고 보고 번호 생성하기');
+      await click();
+      expect(adController.run).toHaveBeenCalledTimes(1);
+    });
+
+    test('광고가 표시되지 않으면 노출·완료 로그를 남기지 않고, 표시되면 남긴다', async () => {
+      const { adController } = require('../utils/ads');
+      const { logImpression, logEvent } = require('../utils/analytics');
+      axios.get.mockResolvedValue(REC);
+      await render();
+      await generate();
+      await click(); // run이 onShown 없이 true: 광고 없이 진행
+      expect(logImpression).not.toHaveBeenCalled();
+      expect(logEvent).not.toHaveBeenCalledWith('ad_completed', expect.anything());
+      await advance(5000);
+      adController.run.mockImplementationOnce(({ onShown }) => { onShown(); return Promise.resolve(true); });
+      await click();
+      expect(logImpression).toHaveBeenCalledWith('reward_ad', { mode: 'recommend' });
+      expect(logEvent).toHaveBeenCalledWith('ad_completed', { mode: 'recommend' });
+    });
+
+    test('랜덤 모드에서는 preload를 부르지 않고 추천 모드에서는 무료 구간에도 부른다', async () => {
+      const { adController } = require('../utils/ads');
+      await render();
+      expect(adController.preload).toHaveBeenCalled(); // 추천(무료 구간)
+      adController.preload.mockClear();
+      await switchTo('랜덤');
+      await generate();
+      expect(adController.preload).not.toHaveBeenCalled();
+      await switchTo('추천');
+      expect(adController.preload).toHaveBeenCalled();
+    });
+
+    test('랜덤 모드에서는 무료 안내 문구를 보여 준다', async () => {
+      await render();
+      await switchTo('랜덤');
+      expect(text()).toContain('랜덤 번호는 언제나 무료예요');
+    });
+
+    test('추천 광고 중도 종료 시 ad_dismissed는 광고가 표시된 경우에만 기록한다', async () => {
+      const { adController } = require('../utils/ads');
+      const { logEvent } = require('../utils/analytics');
+      axios.get.mockResolvedValue(REC);
+      await render();
+      await generate();
+      adController.run.mockImplementationOnce(() => Promise.resolve(false)); // 표시 없이 종료
+      await click();
+      expect(logEvent).not.toHaveBeenCalledWith('ad_dismissed', expect.anything());
+      adController.run.mockImplementationOnce(({ onShown }) => { onShown(); return Promise.resolve(false); });
+      await click();
+      expect(logEvent).toHaveBeenCalledWith('ad_dismissed', { mode: 'recommend' });
+      expect(logEvent).not.toHaveBeenCalledWith('ad_completed', expect.anything());
+    });
   });
 });

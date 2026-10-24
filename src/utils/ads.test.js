@@ -309,3 +309,70 @@ describe('requiresAd (무료 횟수 이후에만 보상형 광고 필요)', () =
     expect(requiresAd({ usedCount: 0, freeCount: 0 })).toBe(true);
   });
 });
+
+describe('run onShown', () => {
+  test('광고가 준비되지 않아 표시하지 못하면 onShown을 호출하지 않는다', async () => {
+    const { sdk } = makeSdk();
+    const ad = make(sdk);
+    const onShown = jest.fn();
+    expect(await ad.run({ onShown })).toBe(true);
+    expect(onShown).not.toHaveBeenCalled();
+  });
+  test('광고를 실제로 표시할 때 onShown을 호출한다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = make(sdk);
+    ad.preload();
+    await flush();
+    state.loadHandlers.onEvent({ type: 'loaded' });
+    const onShown = jest.fn();
+    const pending = ad.run({ onShown });
+    await flush();
+    expect(onShown).not.toHaveBeenCalled(); // 표시 이벤트 전에는 호출하지 않는다
+    state.showHandlers.onEvent({ type: 'show' });
+    state.showHandlers.onEvent({ type: 'impression' });
+    expect(onShown).toHaveBeenCalledTimes(1);
+    state.showHandlers.onEvent({ type: 'userEarnedReward' });
+    state.showHandlers.onEvent({ type: 'dismissed' });
+    expect(await pending).toBe(true);
+  });
+});
+
+describe('run onShown (표시 실패)', () => {
+  const ready = async (sdk, state) => {
+    const ad = make(sdk, { type: 'rewarded' });
+    await ad.preload();
+    state.loadHandlers.onEvent({ type: 'loaded' });
+    return ad;
+  };
+  test('failedToShow·onError 때는 onShown을 호출하지 않고 진행한다', async () => {
+    for (const fail of [(h) => h.onEvent({ type: 'failedToShow' }), (h) => h.onError(new Error('x'))]) {
+      const { sdk, state } = makeSdk();
+      const ad = await ready(sdk, state);
+      const onShown = jest.fn();
+      const pending = ad.run({ onShown });
+      await flush();
+      fail(state.showHandlers);
+      expect(await pending).toBe(true);
+      expect(onShown).not.toHaveBeenCalled();
+    }
+  });
+  test('showFullScreenAd 동기 예외 때는 onShown을 호출하지 않는다', async () => {
+    const { sdk, state } = makeSdk();
+    sdk.showFullScreenAd = Object.assign(() => { throw new Error('native'); }, { isSupported: () => true });
+    const ad = await ready(sdk, state);
+    const onShown = jest.fn();
+    expect(await ad.run({ onShown })).toBe(true);
+    expect(onShown).not.toHaveBeenCalled();
+  });
+  test('표시 이벤트가 없어도 보상 후 종료되면 onShown이 한 번 호출되고 진행한다', async () => {
+    const { sdk, state } = makeSdk();
+    const ad = await ready(sdk, state);
+    const onShown = jest.fn();
+    const pending = ad.run({ onShown });
+    await flush();
+    state.showHandlers.onEvent({ type: 'userEarnedReward' });
+    state.showHandlers.onEvent({ type: 'dismissed' });
+    expect(await pending).toBe(true);
+    expect(onShown).toHaveBeenCalledTimes(1);
+  });
+});

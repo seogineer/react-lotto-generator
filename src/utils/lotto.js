@@ -49,8 +49,9 @@ export const generateRandomSet = ({ fixed = [], excluded = [] } = {}, rng = Math
 export const generateRandomSets = (count, options = {}, rng = Math.random) =>
   Array.from({ length: count }, () => generateRandomSet(options, rng));
 
-// 처음 freeCount회는 무료이고, 그 이후 번호 생성부터 보상형 광고를 끝까지 봐야 한다.
-export const requiresAd = ({ usedCount, freeCount }) => usedCount >= freeCount;
+// 랜덤 모드는 항상 무료다. 추천 모드는 처음 freeCount회 이후 번호 생성부터 보상형 광고를 끝까지 봐야 한다.
+export const requiresAd = ({ usedCount, freeCount, mode = 'recommend' }) =>
+  mode !== 'random' && usedCount >= freeCount;
 
 export const nextPickState = (state) => {
   if (state === undefined) return 'fixed';

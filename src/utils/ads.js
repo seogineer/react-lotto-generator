@@ -148,7 +148,10 @@ export const createAdController = ({
     });
 
   // 번호를 만들어도 되면 true, 그렇지 않으면 false를 돌려준다.
-  const run = async () => {
+  // onShown은 광고가 실제로 표시됐다는 이벤트(show/impression)가 처음 올 때 한 번만 호출한다(로그 정확도용).
+  // 표시 이벤트가 오지 않는 환경을 위해 보상/종료 이벤트가 먼저 와도 표시된 것으로 본다.
+  // failedToShow·오류·예외로 끝난 광고에는 호출하지 않는다.
+  const run = async ({ onShown } = {}) => {
     if (!isEnabled()) return true;
     count += 1;
     if (count % everyN !== 0) {
@@ -166,6 +169,12 @@ export const createAdController = ({
     return new Promise((resolve) => {
       let earned = false;
       let settled = false;
+      let shown = false;
+      const markShown = () => {
+        if (shown || settled) return;
+        shown = true;
+        if (onShown) onShown();
+      };
       const finish = (proceed) => {
         if (settled) return;
         settled = true;
@@ -176,6 +185,7 @@ export const createAdController = ({
         s.showFullScreenAd({
           options: { adGroupId },
           onEvent: (event) => {
+            if (['show', 'impression', 'userEarnedReward', 'dismissed'].includes(event.type)) markShown();
             if (event.type === 'userEarnedReward') earned = true;
             if (event.type === 'dismissed') finish(type === 'rewarded' ? earned : true);
             if (event.type === 'failedToShow') {
